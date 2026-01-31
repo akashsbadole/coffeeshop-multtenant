@@ -1,0 +1,633 @@
+// Universal POS System Schema - Supports Food, Garment, Retail, and General POS
+// India GST compliant with multi-type POS capabilities
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== Core Enums ====================
+
+// User roles for POS system
+enum Role {
+  CASHIER
+  MANAGER
+  ADMIN
+}
+
+// Payment methods commonly used in India
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  NET_BANKING
+  WALLET
+  GIFT_CARD
+}
+
+// Order status tracking
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+// GST rates as per Indian tax structure
+enum GstRate {
+  ZERO
+  FIVE     // 5%
+  TWELVE   // 12%
+  EIGHTEEN // 18%
+  TWENTY_EIGHT // 28%
+}
+
+// POS Types
+enum PosType {
+  FOOD
+  GARMENT
+  RETAIL
+  GENERAL
+}
+
+// Discount types
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+  BOGO       // Buy One Get One
+  BUNDLE     // Bundle discount
+  LOYALTY    // Loyalty points redemption
+}
+
+// Discount status
+enum DiscountStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+// Loyalty tiers
+enum LoyaltyTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+// Refund status
+enum RefundStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+// Cash drawer status
+enum CashDrawerStatus {
+  OPEN
+  CLOSED
+}
+
+// Shift status
+enum ShiftStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// Gift card status
+enum GiftCardStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+  USED
+}
+
+// Table status (Food POS)
+enum TableStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  CLEANING
+}
+
+// Order item status (KDS - Kitchen Display System)
+enum OrderItemStatus {
+  PENDING
+  IN_PROGRESS
+  READY
+  SERVED
+  CANCELLED
+}
+
+// Return/Exchange status (Garment/Retail POS)
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+// ==================== Core Models ====================
+
+// User model for staff management
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String
+  role            Role     @default(CASHIER)
+  password        String
+  phone           String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  orders          Order[]
+  shifts          Shift[]
+  cashDrawers     CashDrawer[]
+  staffPerformance StaffPerformance[]
+  refunds         Refund[]
+  assignedTables  TableAssignment[] @relation("TableAssigner")
+}
+
+// Store settings for India-specific compliance
+model StoreSettings {
+  id              String   @id @default(cuid())
+  posType         PosType  @default(GENERAL)
+  storeName       String   @default("Universal POS")
+  address         String?
+  phone           String?
+  email           String?
+  gstin           String?  // GST Identification Number
+  state           String?
+  stateCode       String?  // 2-letter state code
+  bankName        String?
+  accountNumber   String?
+  ifscCode        String?
+  invoicePrefix   String   @default("INV")
+  startingInvoice Int      @default(1)
+  currency        String   @default("INR")
+  logoUrl         String?
+  enableTableManagement   Boolean @default(false)
+  enableKDS             Boolean @default(false)
+  enableSizeVariants    Boolean @default(false)
+  enableColorVariants   Boolean @default(false)
+  enableBarcodes        Boolean @default(false)
+  enableSerialNumbers   Boolean @default(false)
+  enableReturns         Boolean @default(false)
+  enableExchanges       Boolean @default(false)
+  enableLoyaltyProgram  Boolean @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Menu categories (Beverages, Food, Snacks, Clothing, Electronics, etc.)
+model Category {
+  id            String     @id @default(cuid())
+  name          String
+  description   String?
+  displayOrder  Int        @default(0)
+  isActive      Boolean    @default(true)
+  posType       PosType?   // Optional: restrict to specific POS type
+  imageUrl      String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  items         MenuItem[]
+}
+
+// Menu items with pricing and GST
+model MenuItem {
+  id              String      @id @default(cuid())
+  name            String
+  description     String?
+  price           Float
+  gstRate         GstRate     @default(EIGHTEEN)
+  hsnCode         String?
+  categoryId      String
+  imageUrl        String?
+  isAvailable     Boolean     @default(true)
+  modifiers       String?     // JSON string for modifiers (size, sugar level, etc.)
+  barcode         String?     // For Retail POS
+  sku             String?     // Stock Keeping Unit
+  posType         PosType?    // Optional: restrict to specific POS type
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  category        Category    @relation(fields: [categoryId], references: [id])
+  orderItems      OrderItem[]
+  variants        ProductVariant[]  // For Garment POS
+  inventoryItems  InventoryItem[]   // For Retail POS
+  purchaseOrderItems PurchaseOrderItem[]
+}
+
+// Product variants for Garment POS (sizes, colors)
+model ProductVariant {
+  id              String   @id @default(cuid())
+  menuItemId      String
+  size            String?  // XS, S, M, L, XL, XXL, etc.
+  color           String?  // Red, Blue, Black, etc.
+  sku             String?  // Unique SKU for variant
+  barcode         String?
+  stockQuantity   Int      @default(0)
+  priceAdjustment Float    @default(0) // + or - from base price
+  isAvailable     Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+
+  @@unique([menuItemId, size, color])
+}
+
+// Customer information (optional for walk-in customers)
+model Customer {
+  id              String   @id @default(cuid())
+  name            String?
+  phone           String?  @unique
+  email           String?
+  address         String?
+  loyaltyPoints   Int      @default(0)
+  loyaltyTier     LoyaltyTier?
+  totalSpent      Float    @default(0)
+  visitCount      Int      @default(0)
+  gstin           String?  // For B2B customers
+  panNumber       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  orders          Order[]
+  returns         Return[]
+  giftCards       GiftCard[]
+}
+
+// ==================== Food POS Models ====================
+
+// Tables for restaurant management
+model Table {
+  id              String      @id @default(cuid())
+  name            String      // e.g., "Table 1", "Table 2"
+  capacity        Int         // Number of seats
+  section         String?     // e.g., "Indoor", "Outdoor", "VIP"
+  status          TableStatus @default(AVAILABLE)
+  qrCode          String?     // QR code for ordering
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  orders          Order[]
+  assignments     TableAssignment[]
+
+  @@unique([name, section])
+}
+
+// Table assignments for KDS
+model TableAssignment {
+  id          String   @id @default(cuid())
+  tableId     String
+  orderId     String
+  assignedBy  String   // User ID
+  assignedAt  DateTime @default(now())
+  completedAt DateTime?
+  notes       String?
+
+  table       Table    @relation(fields: [tableId], references: [id])
+  order       Order    @relation(fields: [orderId], references: [id])
+  assignedByUser User  @relation("TableAssigner", fields: [assignedBy], references: [id])
+
+  @@unique([tableId, orderId])
+}
+
+// Order modifiers (Food POS - customizations)
+model OrderModifier {
+  id              String   @id @default(cuid())
+  orderItemId     String
+  name            String   // e.g., "Extra Cheese", "No Sugar"
+  priceAdjustment Float    @default(0)
+  createdAt       DateTime @default(now())
+
+  orderItem       OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+}
+
+// ==================== Main Order Model ====================
+
+// Main order model
+model Order {
+  id              String      @id @default(cuid())
+  orderNumber     String      @unique
+  customerId      String?
+  status          OrderStatus @default(PENDING)
+  type            PosType     @default(GENERAL)
+  subtotal        Float
+  discount        Float       @default(0)
+  discountId      String?
+  discountAmount  Float       @default(0)
+  totalGst        Float
+  sgst            Float       @default(0)
+  cgst            Float       @default(0)
+  totalAmount     Float
+  notes           String?
+  tableId         String?     // For Food POS
+  createdById     String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  createdBy       User        @relation(fields: [createdById], references: [id])
+  items           OrderItem[]
+  payments        Payment[]
+  refunds         Refund[]
+  table           Table?      @relation(fields: [tableId], references: [id])
+  tableAssignment TableAssignment[]
+  returns         Return[]
+}
+
+// Individual items in an order
+model OrderItem {
+  id              String          @id @default(cuid())
+  orderId         String
+  menuItemId      String
+  variantId       String?         // For Garment POS (size/color variant)
+  quantity        Int             @default(1)
+  price           Float           // Price at time of order
+  gstRate         GstRate
+  gstAmount       Float           @default(0)
+  subtotal        Float
+  modifiers       String?         // JSON string for customizations
+  status          OrderItemStatus @default(PENDING) // For KDS
+  serialNumbers   String?         // JSON array for Retail POS (items with serial numbers)
+  notes           String?
+  createdAt       DateTime        @default(now())
+
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem        MenuItem        @relation(fields: [menuItemId], references: [id])
+  variant         ProductVariant? @relation(fields: [variantId], references: [id])
+  modifiersList   OrderModifier[]
+}
+
+// Payment tracking for each order
+model Payment {
+  id              String       @id @default(cuid())
+  orderId         String
+  method          PaymentMethod
+  amount          Float
+  status          String       @default("PENDING")
+  transactionId   String?
+  upiId           String?
+  giftCardId      String?      // For gift card payments
+  notes           String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  order           Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+// ==================== Discounts & Loyalty ====================
+
+// Discount codes and promotions
+model Discount {
+  id              String        @id @default(cuid())
+  code            String        @unique
+  type            DiscountType
+  value           Float         // Percentage value or fixed amount
+  minOrderValue   Float         @default(0)
+  maxDiscount     Float?        // Maximum discount amount
+  usageLimit      Int?
+  usedCount       Int           @default(0)
+  validFrom       DateTime
+  validUntil      DateTime?
+  categoryIds     String?       // JSON array of category IDs
+  isActive        Boolean       @default(true)
+  status          DiscountStatus @default(ACTIVE)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+// ==================== Returns & Refunds (Garment/Retail POS) ====================
+
+// Refund for orders
+model Refund {
+  id              String      @id @default(cuid())
+  orderId         String
+  refundedBy      String      // User ID
+  amount          Float
+  reason          String?
+  status          RefundStatus @default(PENDING)
+  refundMethod    PaymentMethod?
+  referenceId     String?     // Bank reference for tracking
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  order           Order       @relation(fields: [orderId], references: [id])
+  refundedByUser  User        @relation(fields: [refundedBy], references: [id])
+}
+
+// Returns and exchanges for Garment/Retail POS
+model Return {
+  id              String      @id @default(cuid())
+  orderId         String
+  customerId      String
+  orderItemId     String?
+  quantity        Int
+  returnType      String      // "RETURN" or "EXCHANGE"
+  exchangeItemId  String?     // If exchange, what item they want
+  reason          String
+  status          ReturnStatus @default(REQUESTED)
+  refundAmount    Float?
+  notes           String?
+  processedBy     String?     // User ID
+  processedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  order           Order       @relation(fields: [orderId], references: [id])
+  customer        Customer    @relation(fields: [customerId], references: [id])
+}
+
+// ==================== Cash Management ====================
+
+// Cash drawer management
+model CashDrawer {
+  id              String           @id @default(cuid())
+  userId          String
+  openingBalance  Float            @default(0)
+  closingBalance  Float?
+  status          CashDrawerStatus @default(OPEN)
+  openedAt        DateTime         @default(now())
+  closedAt        DateTime?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id])
+  transactions    CashTransaction[]
+}
+
+// Cash transactions
+model CashTransaction {
+  id              String   @id @default(cuid())
+  cashDrawerId    String
+  type            String   // "IN" or "OUT"
+  amount          Float
+  reason          String?
+  reference      String? // Order ID, refund ID, etc.
+  createdAt       DateTime @default(now())
+
+  cashDrawer      CashDrawer @relation(fields: [cashDrawerId], references: [id], onDelete: Cascade)
+}
+
+// ==================== Staff & Shifts ====================
+
+// Staff performance tracking
+model StaffPerformance {
+  id              String   @id @default(cuid())
+  userId          String
+  date            DateTime
+  ordersProcessed Int      @default(0)
+  totalSales      Float    @default(0)
+  averageOrderValue Float?
+  customerRating  Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+}
+
+// Shift management
+model Shift {
+  id              String      @id @default(cuid())
+  userId          String
+  name            String
+  startTime       DateTime
+  endTime         DateTime?
+  status          ShiftStatus @default(SCHEDULED)
+  openingBalance  Float?
+  closingBalance  Float?
+  cashSales       Float?
+  cardSales       Float?
+  upiSales        Float?
+  totalSales      Float?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user            User        @relation(fields: [userId], references: [id])
+}
+
+// ==================== Inventory & Suppliers (Retail POS) ====================
+
+// Inventory items for Retail POS
+model InventoryItem {
+  id              String   @id @default(cuid())
+  menuItemId      String
+  quantity        Int      @default(0)
+  reorderLevel    Int      @default(10)
+  maxStock        Int?
+  location        String?  // Warehouse location
+  lastRestocked   DateTime?
+  serialNumbers   String?  // JSON array for items with serial numbers
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+}
+
+// Suppliers
+model Supplier {
+  id              String   @id @default(cuid())
+  name            String
+  contactPerson   String?
+  phone           String?
+  email           String?
+  address         String?
+  gstin           String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  purchaseOrders  PurchaseOrder[]
+}
+
+// Purchase orders for restocking
+model PurchaseOrder {
+  id              String   @id @default(cuid())
+  supplierId      String
+  orderNumber     String   @unique
+  totalAmount     Float
+  status          String   @default("PENDING") // PENDING, APPROVED, RECEIVED, CANCELLED
+  orderDate       DateTime @default(now())
+  expectedDate    DateTime?
+  receivedDate    DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  supplier        Supplier           @relation(fields: [supplierId], references: [id])
+  items           PurchaseOrderItem[]
+}
+
+// Items in a purchase order
+model PurchaseOrderItem {
+  id              String   @id @default(cuid())
+  purchaseOrderId String
+  menuItemId      String
+  quantity        Int
+  unitPrice       Float
+  total           Float
+  receivedQty     Int?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  menuItem        MenuItem       @relation(fields: [menuItemId], references: [id])
+}
+
+// ==================== Gift Cards ====================
+
+// Gift card system
+model GiftCard {
+  id              String        @id @default(cuid())
+  cardNumber      String        @unique
+  pin             String
+  customerId      String?
+  initialBalance  Float
+  currentBalance  Float
+  status          GiftCardStatus @default(ACTIVE)
+  expiryDate      DateTime?
+  issuedAt        DateTime      @default(now())
+  expiresAt       DateTime?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  customer        Customer?     @relation(fields: [customerId], references: [id])
+}
+
+// ==================== Announcements ====================
+
+// System announcements
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  type        String   // INFO, WARNING, URGENT
+  isActive    Boolean  @default(true)
+  startDate   DateTime
+  endDate     DateTime?
+  targetRole  Role?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

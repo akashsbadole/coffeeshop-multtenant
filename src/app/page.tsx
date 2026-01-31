@@ -1,0 +1,2922 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Separator } from '@/components/ui/separator'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { toast } from 'sonner'
+import {
+  ShoppingCart,
+  Search,
+  Plus,
+  Minus,
+  Trash2,
+  CreditCard,
+  Smartphone,
+  Banknote,
+  Receipt,
+  Coffee,
+  Utensils,
+  Cake,
+  IceCream2,
+  Settings,
+  BarChart3,
+  Package,
+  Users,
+  LogOut,
+  User,
+  TrendingUp,
+  IndianRupee,
+  Calendar,
+  Printer,
+  Clock,
+  Pause,
+  RotateCcw,
+  X,
+  Brain,
+  Mail,
+  MessageSquare,
+  Download,
+  FileText,
+  PieChart,
+  Upload,
+  Store,
+  LayoutGrid,
+  Armchair,
+  ScanBarcode,
+  Tag,
+  RotateCw,
+  Wallet,
+  Key,
+  Shield
+} from 'lucide-react'
+
+interface POSConfig {
+  posType: string
+  name: string
+  features: {
+    tableManagement: boolean
+    kitchenDisplay: boolean
+    modifiers: boolean
+    sizeVariants: boolean
+    colorVariants: boolean
+    barcodes: boolean
+    serialNumbers: boolean
+    returns: boolean
+    exchanges: boolean
+    loyaltyProgram: boolean
+    discounts: boolean
+    refunds: boolean
+    cashDrawer: boolean
+    staffPerformance: boolean
+    giftCards: boolean
+    orders: boolean
+    inventory: boolean
+    reservations: boolean
+    waitlist: boolean
+  }
+  capabilities: string[]
+}
+
+interface User {
+  id: string
+  email: string
+  name: string
+  role: string
+  phone?: string | null
+}
+
+interface MenuItem {
+  id: string
+  name: string
+  description: string | null
+  price: number
+  gstRate: string
+  hsnCode: string | null
+  categoryId: string
+  isAvailable: boolean
+  category: {
+    name: string
+  }
+}
+
+interface CartItem {
+  menuItem: MenuItem
+  quantity: number
+  subtotal: number
+  gstAmount: number
+}
+
+interface Order {
+  id: string
+  orderNumber: string
+  totalAmount: number
+  status: string
+  paymentMethod: string
+  createdAt: string
+  items: Array<{
+    menuItem: {
+      name: string
+      price: number
+    }
+    quantity: number
+  }>
+}
+
+interface DashboardProps {
+  user: User
+  onLogout: () => void
+}
+
+export function POSDashboard({ user, onLogout }: DashboardProps) {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
+  const [categories, setCategories] = useState<any[]>([])
+  const [cart, setCart] = useState<CartItem[]>([])
+  const [orders, setOrders] = useState<Order[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'UPI' | 'CARD'>('CASH')
+  const [customerPhone, setCustomerPhone] = useState('')
+  const [customerName, setCustomerName] = useState('')
+  const [notes, setNotes] = useState('')
+  const [activeTab, setActiveTab] = useState('pos')
+  const [heldOrders, setHeldOrders] = useState<any[]>([])
+  const [heldOrdersOpen, setHeldOrdersOpen] = useState(false)
+
+  // GST Rate mapper - Convert enum strings to percentage values
+  const getGstPercentage = (gstRate: string): number => {
+    const gstMap: Record<string, number> = {
+      'ZERO': 0,
+      'FIVE': 5,
+      'TWELVE': 12,
+      'EIGHTEEN': 18,
+      'TWENTY_EIGHT': 28
+    }
+    return gstMap[gstRate] || 0
+  }
+
+  // POS Configuration state
+  const [posConfig, setPosConfig] = useState<POSConfig | null>(null)
+  const [posConfigLoading, setPosConfigLoading] = useState(true)
+
+  // AI Insights state
+  const [aiInsights, setAiInsights] = useState<any>(null)
+  const [aiInsightsLoading, setAiInsightsLoading] = useState(false)
+
+  // Reports state
+  const [reportType, setReportType] = useState<'sales' | 'inventory' | 'items' | 'payments' | 'customers' | 'comprehensive'>('sales')
+  const [reportData, setReportData] = useState<any>(null)
+  const [reportLoading, setReportLoading] = useState(false)
+  const [reportStartDate, setReportStartDate] = useState('')
+  const [reportEndDate, setReportEndDate] = useState('')
+  const [reportGroupBy, setReportGroupBy] = useState('day')
+
+  // Receipt state
+  const [receiptDialogOpen, setReceiptDialogOpen] = useState(false)
+  const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState<any>(null)
+  const [sendWhatsAppDialogOpen, setSendWhatsAppDialogOpen] = useState(false)
+  const [sendEmailDialogOpen, setSendEmailDialogOpen] = useState(false)
+  const [receiptPhone, setReceiptPhone] = useState('')
+  const [receiptEmail, setReceiptEmail] = useState('')
+
+  // Tables state (Food POS)
+  const [tables, setTables] = useState<any[]>([])
+  const [selectedTable, setSelectedTable] = useState<any>(null)
+  
+  // Variants state (Garment POS)
+  const [selectedVariant, setSelectedVariant] = useState<any>(null)
+  
+  // Barcode state (Retail POS)
+  const [barcodeInput, setBarcodeInput] = useState('')
+  const [barcodeProduct, setBarcodeProduct] = useState<any>(null)
+  
+  // Returns state
+  const [returns, setReturns] = useState<any[]>([])
+  
+  // Cash drawer state
+  const [cashDrawer, setCashDrawer] = useState<any>(null)
+  
+  // Gift cards state
+  const [giftCards, setGiftCards] = useState<any[]>([])
+  const [giftCardLookup, setGiftCardLookup] = useState('')
+  const [giftCardBalance, setGiftCardBalance] = useState<any>(null)
+
+  // Profile state
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false)
+  const [profileData, setProfileData] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  })
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
+
+  // Fetch menu items, categories, and orders
+  useEffect(() => {
+    fetchData()
+    fetchPOSConfig()
+  }, [])
+
+  const fetchPOSConfig = async () => {
+    try {
+      setPosConfigLoading(true)
+      const response = await fetch('/api/pos/config')
+      if (response.ok) {
+        const data = await response.json()
+        setPosConfig(data.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch POS config:', error)
+    } finally {
+      setPosConfigLoading(false)
+    }
+  }
+
+  const fetchData = async () => {
+    try {
+      const [itemsRes, catsRes, ordersRes] = await Promise.all([
+        fetch('/api/pos/menu-items'),
+        fetch('/api/pos/categories'),
+        fetch('/api/pos/orders?limit=20')
+      ])
+
+      if (itemsRes.ok && catsRes.ok) {
+        setMenuItems(await itemsRes.json())
+        setCategories(await catsRes.json())
+      }
+      if (ordersRes.ok) {
+        setOrders(await ordersRes.json())
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error)
+    }
+  }
+
+  // AI Insights functions
+  const fetchAIInsights = async (days = 7) => {
+    try {
+      setAiInsightsLoading(true)
+      const response = await fetch(`/api/ai/insights?days=${days}`)
+      if (response.ok) {
+        const data = await response.json()
+        setAiInsights(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch AI insights:', error)
+      toast.error('Failed to load AI insights')
+    } finally {
+      setAiInsightsLoading(false)
+    }
+  }
+
+  // Report functions
+  const fetchReport = async (type = 'sales', startDate?: string, endDate?: string, groupBy = 'day') => {
+    try {
+      setReportLoading(true)
+      let url = `/api/reports/custom?type=${type}&groupBy=${groupBy}`
+      if (startDate) url += `&startDate=${startDate}`
+      if (endDate) url += `&endDate=${endDate}`
+
+      const response = await fetch(url)
+      if (response.ok) {
+        const data = await response.json()
+        setReportData(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch report:', error)
+      toast.error('Failed to load report')
+    } finally {
+      setReportLoading(false)
+    }
+  }
+
+  // Receipt functions
+  const handleGenerateReceipt = async (order: any) => {
+    setSelectedOrderForReceipt(order)
+    setReceiptDialogOpen(true)
+  }
+
+  const handleSendWhatsApp = async () => {
+    if (!receiptPhone) {
+      toast.error('Please enter a phone number')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/receipts/whatsapp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: selectedOrderForReceipt?.id,
+          phoneNumber: receiptPhone,
+          orderData: selectedOrderForReceipt
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        window.open(data.data.whatsappURL, '_blank')
+        toast.success('Receipt link opened in WhatsApp')
+        setSendWhatsAppDialogOpen(false)
+        setReceiptPhone('')
+      }
+    } catch (error) {
+      console.error('WhatsApp error:', error)
+      toast.error('Failed to send WhatsApp receipt')
+    }
+  }
+
+  const handleSendEmail = async () => {
+    if (!receiptEmail) {
+      toast.error('Please enter an email address')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/receipts/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: selectedOrderForReceipt?.id,
+          email: receiptEmail,
+          orderData: selectedOrderForReceipt
+        })
+      })
+
+      if (response.ok) {
+        toast.success('Receipt email prepared (configure email service for auto-send)')
+        setSendEmailDialogOpen(false)
+        setReceiptEmail('')
+      }
+    } catch (error) {
+      console.error('Email error:', error)
+      toast.error('Failed to send email receipt')
+    }
+  }
+
+  const handlePrintReceipt = () => {
+    if (!selectedOrderForReceipt) return
+
+    fetch('/api/receipts/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: selectedOrderForReceipt.id,
+        orderData: selectedOrderForReceipt
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        const printWindow = window.open('', '_blank')
+        if (printWindow) {
+          printWindow.document.write(data.receiptHTML)
+          printWindow.document.close()
+          printWindow.print()
+        }
+      })
+      .catch(err => {
+        console.error('Print error:', err)
+        toast.error('Failed to print receipt')
+      })
+  }
+
+  const handleExportReport = (format: 'json' | 'csv') => {
+    if (!reportData) {
+      toast.error('No report data to export')
+      return
+    }
+
+    let content: string
+    let filename: string
+    let type: string
+
+    if (format === 'json') {
+      content = JSON.stringify(reportData, null, 2)
+      filename = `${reportType}_report_${new Date().toISOString().split('T')[0]}.json`
+      type = 'application/json'
+    } else {
+      // CSV export (simple implementation)
+      const flatData = JSON.stringify(reportData)
+      content = flatData
+      filename = `${reportType}_report_${new Date().toISOString().split('T')[0]}.csv`
+      type = 'text/csv'
+    }
+
+    const blob = new Blob([content], { type })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    toast.success(`Report exported as ${format.toUpperCase()}`)
+  }
+
+  const handleFileImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) {
+      return
+    }
+
+    const importType = (document.getElementById('importType') as HTMLSelectElement)?.value || 'all'
+
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+
+      const response = await fetch('/api/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, type: importType })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        toast.success(`Import successful! ${result.summary.totalImported} records imported`)
+        
+        // Refresh data
+        if (importType === 'all' || importType === 'users' || importType === 'products' || importType === 'categories') {
+          fetchData()
+        }
+      } else {
+        const error = await response.json()
+        toast.error(`Import failed: ${error.error}`)
+      }
+    } catch (error) {
+      console.error('Import error:', error)
+      toast.error('Failed to import data. Please check the file format.')
+    }
+  }
+
+  // Profile handlers
+  const handleOpenProfile = () => {
+    setProfileData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || ''
+    })
+    setProfileDialogOpen(true)
+  }
+
+  const handleUpdateProfile = async () => {
+    try {
+      setProfileLoading(true)
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          ...profileData
+        })
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setUser({ ...user, ...result.user })
+        toast.success('Profile updated successfully!')
+        setProfileDialogOpen(false)
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Profile update error:', error)
+      toast.error('Failed to update profile')
+    } finally {
+      setProfileLoading(false)
+    }
+  }
+
+  const handleChangePassword = async () => {
+    try {
+      setPasswordLoading(true)
+
+      // Validate passwords match
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        toast.error('New passwords do not match')
+        return
+      }
+
+      // Validate password strength
+      if (passwordData.newPassword.length < 6) {
+        toast.error('Password must be at least 6 characters')
+        return
+      }
+
+      const response = await fetch(`/api/users/${user.id}/password`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(passwordData)
+      })
+
+      if (response.ok) {
+        toast.success('Password changed successfully!')
+        setPasswordDialogOpen(false)
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        })
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Failed to change password')
+      }
+    } catch (error) {
+      console.error('Password change error:', error)
+      toast.error('Failed to change password')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
+  // Load AI insights when tab changes to insights
+  useEffect(() => {
+    if (activeTab === 'insights' && !aiInsights) {
+      fetchAIInsights(7)
+    }
+  }, [activeTab])
+
+  // Load initial report when tab changes to reports
+  useEffect(() => {
+    if (activeTab === 'reports' && !reportData) {
+      fetchReport('sales')
+    }
+  }, [activeTab])
+
+  // Filter menu items based on category and search
+  const filteredItems = menuItems.filter(item => {
+    const matchesCategory = selectedCategory === 'all' || item.categoryId === selectedCategory
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         item.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    const isAvailable = item.isAvailable
+    return matchesCategory && matchesSearch && isAvailable
+  })
+
+  // Add item to cart
+  const addToCart = (menuItem: MenuItem) => {
+    const existingItem = cart.find(item => item.menuItem.id === menuItem.id)
+    
+    if (existingItem) {
+      updateQuantity(menuItem.id, existingItem.quantity + 1)
+    } else {
+      const gstPercentage = getGstPercentage(menuItem.gstRate)
+      const gstAmount = menuItem.price * (gstPercentage / 100)
+      const newItem: CartItem = {
+        menuItem,
+        quantity: 1,
+        subtotal: menuItem.price,
+        gstAmount: gstAmount
+      }
+      setCart([...cart, newItem])
+    }
+    toast.success(`Added ${menuItem.name} to cart`)
+  }
+
+  // Update quantity of item in cart
+  const updateQuantity = (itemId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeFromCart(itemId)
+      return
+    }
+
+    setCart(cart.map(item => {
+      if (item.menuItem.id === itemId) {
+        const gstPercentage = getGstPercentage(item.menuItem.gstRate)
+        const gstAmount = item.menuItem.price * newQuantity * (gstPercentage / 100)
+        const subtotal = item.menuItem.price * newQuantity
+        return {
+          ...item,
+          quantity: newQuantity,
+          subtotal,
+          gstAmount
+        }
+      }
+      return item
+    }))
+    toast.success('Cart updated')
+  }
+
+  // Remove item from cart
+  const removeFromCart = (itemId: string) => {
+    setCart(cart.filter(item => item.menuItem.id !== itemId))
+    toast.success('Item removed from cart')
+  }
+
+  // Calculate totals with NaN protection
+  const subtotal = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0)
+  const totalGst = cart.reduce((sum, item) => sum + (item.gstAmount || 0), 0)
+  const total = subtotal + totalGst
+  const sgst = totalGst / 2
+  const cgst = totalGst / 2
+
+  // Safe formatting function
+  const formatCurrency = (value: number): string => {
+    return isNaN(value) ? '₹0.00' : `₹${value.toFixed(2)}`
+  }
+
+  // Handle checkout
+  const handleCheckout = async () => {
+    if (cart.length === 0) {
+      toast.error('Cart is empty')
+      return
+    }
+
+    try {
+      const orderData = {
+        customerName: customerName || undefined,
+        customerPhone: customerPhone || undefined,
+        notes: notes || undefined,
+        items: cart.map(item => ({
+          menuItemId: item.menuItem.id,
+          quantity: item.quantity,
+          price: item.menuItem.price,
+          gstRate: item.menuItem.gstRate,
+          gstAmount: item.gstAmount,
+          subtotal: item.subtotal
+        })),
+        subtotal,
+        totalGst,
+        sgst,
+        cgst,
+        total,
+        paymentMethod
+      }
+
+      const response = await fetch('/api/pos/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      })
+
+      if (response.ok) {
+        const order = await response.json()
+        toast.success('Order placed successfully!')
+        setCart([])
+        setCustomerName('')
+        setCustomerPhone('')
+        setNotes('')
+        setCheckoutOpen(false)
+        fetchData()
+        toast.success(`Order #${order.orderNumber} - ${formatCurrency(total)}`)
+      } else {
+        throw new Error('Failed to place order')
+      }
+    } catch (error) {
+      console.error('Checkout error:', error)
+      toast.error('Failed to place order')
+    }
+  }
+
+  // Calculate daily stats
+  const today = new Date().toDateString()
+  const todayOrders = orders.filter(order => 
+    new Date(order.createdAt).toDateString() === today
+  )
+  const todayRevenue = todayOrders.reduce((sum, order) => sum + order.totalAmount, 0)
+  const totalOrdersCount = orders.length
+
+  // Hold/Park Order Functions
+  const handleHoldOrder = async () => {
+    if (cart.length === 0) {
+      toast.error('Cart is empty')
+      return
+    }
+
+    const heldOrder = {
+      id: Date.now().toString(),
+      items: cart,
+      customerName,
+      customerPhone,
+      notes,
+      subtotal,
+      totalGst,
+      sgst,
+      cgst,
+      total,
+      heldAt: new Date().toISOString(),
+      heldBy: user.name
+    }
+
+    try {
+      const existingHeld = JSON.parse(localStorage.getItem('heldOrders') || '[]')
+      existingHeld.unshift(heldOrder)
+      const updatedHeld = existingHeld.slice(0, 50)
+      localStorage.setItem('heldOrders', JSON.stringify(updatedHeld))
+
+      setHeldOrders(updatedHeld)
+      setCart([])
+      setCustomerName('')
+      setCustomerPhone('')
+      setNotes('')
+
+      toast.success(`Order held - ${updatedHeld.length} total orders`)
+    } catch (error) {
+      console.error('Hold order error:', error)
+      toast.error('Failed to hold order')
+    }
+  }
+
+  const handleRecallOrder = (heldOrderId: string) => {
+    const orderToRecall = heldOrders.find(order => order.id === heldOrderId)
+    if (!orderToRecall) return
+
+    try {
+      setCart(orderToRecall.items)
+      setCustomerName(orderToRecall.customerName || '')
+      setCustomerPhone(orderToRecall.customerPhone || '')
+      setNotes(orderToRecall.notes || '')
+
+      const updatedHeld = heldOrders.filter(order => order.id !== heldOrderId)
+      setHeldOrders(updatedHeld)
+      localStorage.setItem('heldOrders', JSON.stringify(updatedHeld))
+      setHeldOrdersOpen(false)
+      toast.success(`Recalled order from ${orderToRecall.heldBy}`)
+    } catch (error) {
+      console.error('Recall order error:', error)
+      toast.error('Failed to recall order')
+    }
+  }
+
+  const handleDeleteHeldOrder = (heldOrderId: string) => {
+    try {
+      const updatedHeld = heldOrders.filter(order => order.id !== heldOrderId)
+      setHeldOrders(updatedHeld)
+      localStorage.setItem('heldOrders', JSON.stringify(updatedHeld))
+      toast.success('Held order deleted')
+    } catch (error) {
+      console.error('Delete held order error:', error)
+      toast.error('Failed to delete held order')
+    }
+  }
+
+  const handleCancelOrder = () => {
+    if (cart.length === 0) return
+
+    if (!confirm('Are you sure you want to cancel this order?')) return
+
+    setCart([])
+    setCustomerName('')
+    setCustomerPhone('')
+    setNotes('')
+    toast.success('Order cancelled')
+  }
+
+  // Get role badge color
+  const getRoleBadge = (role: string) => {
+    switch (role) {
+      case 'ADMIN':
+        return <Badge className="bg-purple-600">{role}</Badge>
+      case 'MANAGER':
+        return <Badge className="bg-blue-600">{role}</Badge>
+      default:
+        return <Badge className="bg-green-600">{role}</Badge>
+    }
+  }
+
+  // Get icon for category
+  const getCategoryIcon = (categoryName: string) => {
+    const name = categoryName.toLowerCase()
+    if (name.includes('coffee') || name.includes('beverage') || name.includes('hot')) {
+      return <Coffee className="h-4 w-4" />
+    }
+    if (name.includes('food') || name.includes('meal') || name.includes('snack')) {
+      return <Utensils className="h-4 w-4" />
+    }
+    if (name.includes('cake') || name.includes('pastry') || name.includes('dessert')) {
+      return <Cake className="h-4 w-4" />
+    }
+    if (name.includes('ice') || name.includes('cool') || name.includes('cold')) {
+      return <IceCream2 className="h-4 w-4" />
+    }
+    return <Utensils className="h-4 w-4" />
+  }
+
+  // Get payment method icon
+  const getPaymentIcon = (method: string) => {
+    switch (method) {
+      case 'CASH':
+        return <Banknote className="h-4 w-4 text-green-600" />
+      case 'UPI':
+        return <Smartphone className="h-4 w-4 text-purple-600" />
+      case 'CARD':
+        return <CreditCard className="h-4 w-4 text-blue-600" />
+      default:
+        return <CreditCard className="h-4 w-4" />
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xl">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm">
+              <div className="bg-white/20 p-2 rounded-lg">
+                <Coffee className="h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">{posConfig?.name || 'Universal POS'}</h1>
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/30 border-0 text-xs">
+                    {posConfig?.posType || 'GENERAL'}
+                  </Badge>
+                  <p className="text-amber-100 text-xs">India GST Compliant</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              {/* Date Badge */}
+              <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/30 border-0">
+                <Calendar className="h-3 w-3 mr-1" />
+                {new Date().toLocaleDateString('en-IN', { 
+                  day: '2-digit', 
+                  month: 'short', 
+                  year: 'numeric' 
+                })}
+              </Badge>
+
+              {/* User Info */}
+              <div 
+                className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm cursor-pointer hover:bg-white/20 transition-all"
+                onClick={handleOpenProfile}
+              >
+                <div className="bg-white/20 p-2 rounded-full">
+                  <User className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">{user.name}</p>
+                  {getRoleBadge(user.role)}
+                </div>
+              </div>
+
+              {/* Logout Button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onLogout}
+                className="bg-white/20 hover:bg-white/30 text-white border-0"
+                title="Logout"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 container mx-auto px-4 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-1 mb-6 bg-white shadow-lg p-2 rounded-xl border-amber-200 overflow-x-auto">
+            <TabsTrigger value="pos" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              POS
+            </TabsTrigger>
+            {posConfig?.features.orders && (
+              <TabsTrigger value="orders" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+                <Receipt className="h-4 w-4 mr-2" />
+                Orders
+              </TabsTrigger>
+            )}
+            {posConfig?.features.tableManagement && (
+              <TabsTrigger value="tables" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
+                <LayoutGrid className="h-4 w-4 mr-2" />
+                Tables
+              </TabsTrigger>
+            )}
+            {posConfig?.features.kitchenDisplay && (
+              <TabsTrigger value="kds" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+                <Armchair className="h-4 w-4 mr-2" />
+                KDS
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="insights" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+              <Brain className="h-4 w-4 mr-2" />
+              AI Insights
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Reports
+            </TabsTrigger>
+            {posConfig?.features.inventory && (
+              <TabsTrigger value="inventory" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+                <Package className="h-4 w-4 mr-2" />
+                Inventory
+              </TabsTrigger>
+            )}
+            {(user.role === 'ADMIN' || user.role === 'MANAGER') && (
+              <TabsTrigger value="menu" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+                <Utensils className="h-4 w-4 mr-2" />
+                Menu
+              </TabsTrigger>
+            )}
+            {user.role === 'ADMIN' && (
+              <TabsTrigger value="settings" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+                <Users className="h-4 w-4 mr-2" />
+                Staff
+              </TabsTrigger>
+            )}
+            {posConfig?.features.returns && (
+              <TabsTrigger value="returns" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white">
+                <RotateCw className="h-4 w-4 mr-2" />
+                Returns
+              </TabsTrigger>
+            )}
+            {posConfig?.features.giftCards && (
+              <TabsTrigger value="giftcards" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-pink-600 data-[state=active]:text-white">
+                <Card className="h-4 w-4 mr-2" />
+                Gift Cards
+              </TabsTrigger>
+            )}
+            {posConfig?.features.cashDrawer && (
+              <TabsTrigger value="cashdrawer" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white">
+                <Wallet className="h-4 w-4 mr-2" />
+                Cash Drawer
+              </TabsTrigger>
+            )}
+            {posConfig?.features.barcodes && (
+              <TabsTrigger value="barcode" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white">
+                <ScanBarcode className="h-4 w-4 mr-2" />
+                Barcode
+              </TabsTrigger>
+            )}
+            {posConfig?.features.sizeVariants && (
+              <TabsTrigger value="variants" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
+                <Tag className="h-4 w-4 mr-2" />
+                Variants
+              </TabsTrigger>
+            )}
+          </TabsList>
+
+          {/* POS Tab */}
+          <TabsContent value="pos" className="mt-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-220px)]">
+              {/* Menu Section */}
+              <div className="lg:col-span-2 flex flex-col gap-4">
+                {/* Category Filter */}
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  <Button
+                    key="all"
+                    variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                    onClick={() => setSelectedCategory('all')}
+                    className={selectedCategory === 'all' 
+                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg' 
+                      : 'bg-white hover:bg-amber-50 border-amber-200'
+                    }
+                  >
+                    All Items
+                  </Button>
+                  {categories.map((category) => (
+                    <Button
+                      key={category.id}
+                      variant={selectedCategory === category.id ? 'default' : 'outline'}
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`flex-shrink-0 flex items-center gap-2 ${
+                        selectedCategory === category.id
+                          ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg'
+                          : 'bg-white hover:bg-amber-50 border-amber-200'
+                      }`}
+                    >
+                      {getCategoryIcon(category.name)}
+                      {category.name}
+                    </Button>
+                  ))}
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Input
+                    type="text"
+                    placeholder="Search menu items by name or description..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-12 h-12 bg-white shadow-sm border-amber-200 focus:border-amber-400 text-base"
+                  />
+                </div>
+
+                {/* Menu Items Grid */}
+                <ScrollArea className="flex-1 pr-4 h-full overflow-y-auto">
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
+                    {filteredItems.map((item) => (
+                      <Card
+                        key={item.id}
+                        className="cursor-pointer hover:shadow-2xl transition-all hover:scale-105 border-2 border-transparent hover:border-amber-400 group overflow-hidden bg-white"
+                        onClick={() => addToCart(item)}
+                      >
+                        <CardHeader className="p-4 pb-2 bg-gradient-to-br from-amber-50 to-orange-50 group-hover:from-amber-100 group-hover:to-orange-100 transition-colors">
+                          <CardTitle className="text-base font-semibold line-clamp-1">
+                            {item.name}
+                          </CardTitle>
+                          {item.description && (
+                            <p className="text-xs text-gray-500 line-clamp-2">
+                              {item.description}
+                            </p>
+                          )}
+                        </CardHeader>
+                        <CardContent className="p-4 pt-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                                ₹{item.price.toFixed(2)}
+                              </span>
+                              <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-200">
+                                GST {item.gstRate}%
+                              </Badge>
+                            </div>
+                            </div>
+                            <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-lg shadow-lg group-hover:shadow-xl transition-all">
+                              <Plus className="h-5 w-5 text-white" />
+                            </div>
+                          </CardContent>
+                        </Card>
+                    ))}
+                  </div>
+
+                  {filteredItems.length === 0 && (
+                    <div className="text-center py-16 text-gray-500">
+                      <Coffee className="h-20 w-20 mx-auto mb-4 opacity-20" />
+                      <p className="font-medium text-lg">No items found</p>
+                      <p className="text-sm">Try adjusting your search or category filter</p>
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
+
+              {/* Cart Section */}
+              <div className="flex flex-col gap-4">
+                <Card className="flex-1 flex flex-col shadow-xl border-0 overflow-hidden">
+                  <CardHeader className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-4">
+                    <CardTitle className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShoppingCart className="h-6 w-6" />
+                        Current Order
+                        {cart.length > 0 && (
+                          <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                            {cart.length} {cart.length === 1 ? 'item' : 'items'}
+                          </Badge>
+                        )}
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+
+                  <CardContent className="flex-1 p-4 flex flex-col bg-white">
+                    {cart.length === 0 ? (
+                      <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+                        <div className="bg-gradient-to-br from-amber-100 to-orange-100 p-6 rounded-full mb-4">
+                          <ShoppingCart className="h-12 w-12 text-amber-400" />
+                        </div>
+                        <p className="font-medium">Your cart is empty</p>
+                        <p className="text-sm">Add delicious items from menu</p>
+                      </div>
+                    ) : (
+                      <ScrollArea className="flex-1 pr-2">
+                        <div className="space-y-3">
+                          {cart.map((item) => (
+                            <div
+                              key={item.menuItem.id}
+                              className="flex flex-col p-4 bg-gradient-to-br from-gray-50 to-amber-50 rounded-xl border border-gray-100 hover:border-amber-200 transition-all"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-semibold text-gray-900 line-clamp-1">
+                                    {item.menuItem.name}
+                                  </h4>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {formatCurrency(item.price)} each
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeFromCart(item.menuItem.id)}
+                                  className="hover:bg-red-50 hover:text-red-600 flex-shrink-0"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              <div className="flex items-center justify-between mt-3">
+                                <div className="flex items-center gap-3">
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
+                                    className="h-9 w-9 hover:bg-amber-50 hover:border-amber-300"
+                                    disabled={item.quantity <= 1}
+                                  >
+                                    <Minus className="h-3 w-3" />
+                                  </Button>
+                                  <span className="font-bold w-10 text-center text-lg">
+                                    {item.quantity}
+                                  </span>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                                    className="h-9 w-9 hover:bg-amber-50 hover:border-amber-300"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-bold text-xl text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                                    {formatCurrency(item.subtotal)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                        ))}
+                        </div>
+                      </ScrollArea>
+                    )}
+
+                    {/* Order Summary */}
+                    {cart.length > 0 && (
+                      <>
+                        <div className="mt-4 space-y-3 border-t-2 border-amber-200 pt-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Subtotal</span>
+                            <span className="font-semibold">{formatCurrency(subtotal)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-green-700">
+                            <span>CGST ({subtotal > 0 ? ((totalGst/2)/subtotal*100).toFixed(1) : '0'}%)</span>
+                            <span className="font-semibold">{formatCurrency(cgst)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-green-700">
+                            <span>SGST ({subtotal > 0 ? ((totalGst/2)/subtotal*100).toFixed(1) : '0'}%)</span>
+                            <span className="font-semibold">{formatCurrency(sgst)}</span>
+                          </div>
+                          <Separator />
+                          <div className="flex justify-between text-xl font-bold">
+                            <span>Total</span>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                              {formatCurrency(total)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 mt-4">
+                          <Button
+                            onClick={handleCancelOrder}
+                            className="flex-1 h-11 bg-gray-100 hover:bg-gray-200 text-gray-700"
+                            disabled={cart.length === 0}
+                            >
+                              <RotateCcw className="h-4 w-4 mr-2" />
+                              Cancel
+                            </Button>
+                          <Button
+                            onClick={handleHoldOrder}
+                            className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg"
+                            disabled={cart.length === 0}
+                            >
+                              <Clock className="h-4 w-4 mr-2" />
+                              Hold
+                            </Button>
+                            <Button
+                              onClick={() => setHeldOrdersOpen(true)}
+                              className="flex-1 h-11 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
+                              disabled={cart.length === 0}
+                            >
+                              <Clock className="h-4 w-4 mr-2" />
+                              Held ({heldOrders.length})
+                            </Button>
+                            <Button
+                              onClick={() => setCheckoutOpen(true)}
+                              className="flex-1 h-14 text-base font-semibold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-xl"
+                              disabled={cart.length === 0}
+                            >
+                              <ShoppingCart className="h-5 w-5 mr-2" />
+                              Pay
+                            </Button>
+                          </div>
+                        </>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Orders Tab */}
+          <TabsContent value="orders">
+            <Card className="shadow-xl">
+              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+                <div className="flex items-center gap-2">
+                  <Receipt className="h-6 w-6" />
+                  Order History
+                </div>
+                <CardDescription className="text-amber-100">
+                  View and manage all orders
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="rounded-lg border border-amber-200 overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-gradient-to-r from-amber-50 to-orange-50">
+                      <TableRow>
+                        <TableHead className="font-semibold">Order #</TableHead>
+                        <TableHead className="font-semibold">Date</TableHead>
+                        <TableHead className="font-semibold">Items</TableHead>
+                        <TableHead className="font-semibold">Payment</TableHead>
+                        <TableHead className="font-semibold text-right">Amount</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold text-center">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {orders.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center py-12 text-gray-500">
+                            <Receipt className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                            <p className="font-medium">No orders yet</p>
+                            <p className="text-sm">Start taking orders to see them here</p>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        <>
+                          {orders.map((order) => (
+                            <TableRow key={order.id} className="hover:bg-amber-50/50 transition-colors">
+                              <TableCell className="font-medium">
+                                <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
+                                  #{order.orderNumber}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  {getPaymentIcon(order.paymentMethod)}
+                                  <span className="text-sm">{order.paymentMethod}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right font-bold">
+                                <span className="text-amber-600">{formatCurrency(order.totalAmount)}</span>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Badge className={
+                                  order.status === 'COMPLETED'
+                                    ? 'bg-green-600'
+                                    : 'bg-yellow-600'
+                                }>
+                                  {order.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1 justify-center">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleGenerateReceipt(order)}
+                                    className="h-8 px-2 hover:bg-amber-50 hover:border-amber-300"
+                                    title="Generate Receipt"
+                                  >
+                                    <Printer className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedOrderForReceipt(order)
+                                      setSendWhatsAppDialogOpen(true)
+                                      setReceiptPhone(order.customerPhone || '')
+                                    }}
+                                    className="h-8 px-2 hover:bg-green-50 hover:border-green-300"
+                                    title="Send via WhatsApp"
+                                  >
+                                    <MessageSquare className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedOrderForReceipt(order)
+                                      setSendEmailDialogOpen(true)
+                                    }}
+                                    className="h-8 px-2 hover:bg-blue-50 hover:border-blue-300"
+                                    title="Send via Email"
+                                  >
+                                    <Mail className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </>
+                      )}
+                    </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+          </TabsContent>
+
+          {/* AI Insights Tab */}
+          <TabsContent value="insights">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                    AI-Powered Business Insights
+                  </h2>
+                  <p className="text-gray-600 mt-1">Smart analytics and recommendations for your coffee shop</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => fetchAIInsights(7)}
+                    variant={aiInsights?.period === '7 days' ? 'default' : 'outline'}
+                    className={aiInsights?.period === '7 days'
+                      ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
+                      : ''
+                    }
+                  >
+                    7 Days
+                  </Button>
+                  <Button
+                    onClick={() => fetchAIInsights(30)}
+                    variant={aiInsights?.period === '30 days' ? 'default' : 'outline'}
+                    className={aiInsights?.period === '30 days'
+                      ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
+                      : ''
+                    }
+                  >
+                    30 Days
+                  </Button>
+                  <Button
+                    onClick={() => fetchAIInsights(90)}
+                    variant={aiInsights?.period === '90 days' ? 'default' : 'outline'}
+                    className={aiInsights?.period === '90 days'
+                      ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
+                      : ''
+                    }
+                  >
+                    90 Days
+                  </Button>
+                </div>
+              </div>
+
+              {aiInsightsLoading ? (
+                <Card>
+                  <CardContent className="p-12 text-center text-gray-500">
+                    <Brain className="h-16 w-16 mx-auto mb-4 animate-pulse" />
+                    <p className="text-lg font-medium">Analyzing your business data...</p>
+                    <p className="text-sm mt-2">AI is generating insights</p>
+                  </CardContent>
+                </Card>
+              ) : aiInsights ? (
+                <>
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                      <CardHeader className="p-4">
+                        <CardDescription className="text-purple-100 text-sm">Total Revenue</CardDescription>
+                        <CardTitle className="text-3xl font-bold">{formatCurrency(aiInsights.summary.totalRevenue)}</CardTitle>
+                      </CardHeader>
+                    </Card>
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                      <CardHeader className="p-4">
+                        <CardDescription className="text-blue-100 text-sm">Total Orders</CardDescription>
+                        <CardTitle className="text-3xl font-bold">{aiInsights.summary.totalOrders}</CardTitle>
+                      </CardHeader>
+                    </Card>
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
+                      <CardHeader className="p-4">
+                        <CardDescription className="text-green-100 text-sm">Avg Order Value</CardDescription>
+                        <CardTitle className="text-3xl font-bold">₹{aiInsights.summary.averageOrderValue}</CardTitle>
+                      </CardHeader>
+                    </Card>
+                    <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+                      <CardHeader className="p-4">
+                        <CardDescription className="text-amber-100 text-sm">Analysis Period</CardDescription>
+                        <CardTitle className="text-2xl font-bold">{aiInsights.period}</CardTitle>
+                      </CardHeader>
+                    </Card>
+                  </div>
+
+                  {/* AI Insights Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {aiInsights.insights.map((insight: any, index: number) => (
+                      <Card key={index} className={`border-0 shadow-lg ${
+                        insight.type === 'positive' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-green-500' :
+                        insight.type === 'warning' ? 'bg-gradient-to-br from-red-50 to-orange-50 border-l-4 border-red-500' :
+                        'bg-gradient-to-br from-blue-50 to-purple-50 border-l-4 border-blue-500'
+                      }`}>
+                        <CardHeader>
+                          <CardTitle className={`text-lg flex items-center gap-2 ${
+                            insight.type === 'positive' ? 'text-green-700' :
+                            insight.type === 'warning' ? 'text-red-700' :
+                            'text-blue-700'
+                          }`}>
+                            {insight.type === 'positive' ? '📈' : insight.type === 'warning' ? '⚠️' : '📊'}
+                            {insight.title}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-gray-700 mb-3">{insight.message}</p>
+                          <div className="bg-white/80 p-3 rounded-lg border">
+                            <p className="text-sm font-semibold text-gray-800 mb-1">💡 Recommendation:</p>
+                            <p className="text-sm text-gray-600">{insight.recommendation}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Top Items */}
+                  <Card className="border-0 shadow-lg">
+                    <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                      <CardTitle className="flex items-center gap-2">
+                        <PieChart className="h-5 w-5" />
+                        Top Selling Items
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        {aiInsights.topItems.map((item: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-purple-50 rounded-lg">
+                            <div className="flex items-center gap-4">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
+                                index === 0 ? 'bg-amber-500' :
+                                index === 1 ? 'bg-gray-400' :
+                                index === 2 ? 'bg-orange-600' :
+                                'bg-purple-300'
+                              }`}>
+                                {index + 1}
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-900">{item.name}</p>
+                                <p className="text-sm text-gray-500">{item.quantity} items sold</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-lg text-purple-600">₹{item.revenue.toFixed(2)}</p>
+                              <p className="text-xs text-gray-500">Total revenue</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              ) : (
+                <Card>
+                  <CardContent className="p-12 text-center text-gray-500">
+                    <Brain className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                    <p className="text-lg font-medium">No insights available</p>
+                    <p className="text-sm mt-2">Generate some orders to see AI-powered insights</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Reports Tab */}
+          <TabsContent value="reports">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4">
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-6 w-6" />
+                    Today's Revenue
+                  </CardTitle>
+                  <CardDescription className="text-green-100">
+                    Daily sales summary
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-6 py-6">
+                    <div className="flex-1 flex flex-col items-center">
+                      <div className="bg-green-100 p-4 rounded-xl">
+                        <IndianRupee className="h-12 w-12 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Today's Revenue</p>
+                        <p className="text-3xl font-bold">₹{todayRevenue.toFixed(0)}</p>
+                      </div>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center">
+                      <div className="bg-green-100 p-4 rounded-xl">
+                        <Receipt className="h-12 w-12 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Today's Orders</p>
+                        <p className="text-3xl font-bold">{todayOrders.length}</p>
+                      </div>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center">
+                      <div className="bg-green-100 p-4 rounded-xl">
+                        <BarChart3 className="h-12 w-12 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Total Orders</p>
+                        <p className="text-3xl font-bold">{totalOrdersCount}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4">
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-6 w-6" />
+                    Total Revenue
+                  </CardTitle>
+                  <CardDescription className="text-purple-100">
+                    All-time sales data
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-6 py-6">
+                    <div className="flex-1 flex flex-col items-center">
+                      <div className="bg-purple-100 p-4 rounded-xl">
+                        <TrendingUp className="h-12 w-12 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Total Revenue</p>
+                        <p className="text-3xl font-bold">
+                          ₹{orders.reduce((sum, order) => sum + order.totalAmount, 0).toFixed(0)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex-1 flex flex-col items-center">
+                      <div className="bg-purple-100 p-4 rounded-xl">
+                        <Receipt className="h-12 w-12 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Total Orders</p>
+                        <p className="text-3xl font-bold">{totalOrdersCount}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4">
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-6 w-6" />
+                    Average Order Value
+                  </CardTitle>
+                  <CardDescription className="text-blue-100">
+                      Average per order
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-6 py-6">
+                    <div className="flex-1 flex flex-col items-center">
+                      <div className="bg-blue-100 p-4 rounded-xl">
+                        <IndianRupee className="h-12 w-12 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600">Avg Order Value</p>
+                        <p className="text-3xl font-bold">
+                          {totalOrdersCount > 0
+                            ? `₹${(orders.reduce((sum, order) => sum + order.totalAmount, 0) / totalOrdersCount).toFixed(2)}`
+                            : '₹0'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-4">
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-6 w-6" />
+                    Inventory Status
+                  </CardTitle>
+                  <CardDescription className="text-amber-100">
+                    Stock tracking & management
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="text-center py-12 text-gray-500">
+                    <Package className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                    <p className="font-medium text-lg">Inventory coming soon</p>
+                    <p className="text-sm mt-2">Stock tracking will be available in the next update</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Inventory Tab - Manager/Admin only */}
+          <TabsContent value="inventory">
+            <Card className="shadow-xl">
+              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-6 w-6" />
+                  Inventory Management
+                </CardTitle>
+                <CardDescription className="text-amber-100">
+                  Track stock levels and manage inventory
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="text-center py-12 text-gray-500">
+                  <Package className="h-20 w-20 mx-auto mb-4 opacity-20" />
+                  <p className="font-medium text-lg">Inventory features coming soon</p>
+                  <p className="text-sm mt-2">Stock tracking will be available in the next update</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Menu Tab - Manager/Admin only */}
+          <TabsContent value="menu">
+            <Card className="shadow-xl">
+              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+                <CardTitle className="flex items-center gap-2">
+                  <Utensils className="h-6 w-6" />
+                  Menu Management
+                </CardTitle>
+                <CardDescription className="text-amber-100">
+                  Add, edit, or remove menu items
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="text-center py-12 text-gray-500">
+                  <Utensils className="h-20 w-20 mx-auto mb-4 opacity-20" />
+                  <p className="font-medium text-lg">Menu features coming soon</p>
+                  <p className="text-sm mt-2">Menu management will be available in the next update</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Settings Tab - Admin only */}
+          <TabsContent value="settings">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Staff Management */}
+              <Card className="shadow-xl">
+                <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-6 w-6" />
+                    Staff Management
+                  </CardTitle>
+                  <CardDescription className="text-purple-100">
+                    Manage staff accounts and permissions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="text-center py-12 text-gray-500">
+                    <Users className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                    <p className="font-medium text-lg">Staff management coming soon</p>
+                    <p className="text-sm mt-2">User management will be available in the next update</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Data Import/Export */}
+              <Card className="shadow-xl">
+                <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <Download className="h-6 w-6" />
+                    Data Import & Export
+                  </CardTitle>
+                  <CardDescription className="text-amber-100">
+                    Backup, restore, and migrate your data
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  {/* Export Section */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                      <Download className="h-5 w-5 text-amber-600" />
+                      Export Data
+                    </h3>
+                    <div className="space-y-2">
+                      <Button
+                        onClick={() => window.open('/api/export?type=all', '_blank')}
+                        className="w-full justify-start bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export All Data (Users, Products, Categories, Orders)
+                      </Button>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open('/api/export?type=users', '_blank')}
+                          className="justify-start"
+                        >
+                          <Users className="h-4 w-4 mr-2" />
+                          Export Users
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open('/api/export?type=products', '_blank')}
+                          className="justify-start"
+                        >
+                          <Utensils className="h-4 w-4 mr-2" />
+                          Export Products
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open('/api/export?type=categories', '_blank')}
+                          className="justify-start"
+                        >
+                          <Package className="h-4 w-4 mr-2" />
+                          Export Categories
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open('/api/export?type=orders', '_blank')}
+                          className="justify-start"
+                        >
+                          <Receipt className="h-4 w-4 mr-2" />
+                          Export Orders
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Import Section */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+                      <Upload className="h-5 w-5 text-purple-600" />
+                      Import Data
+                    </h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 mb-2 block">Select Import Type</label>
+                        <select
+                          id="importType"
+                          className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-purple-500"
+                        >
+                          <option value="all">Import All Data</option>
+                          <option value="users">Import Users Only</option>
+                          <option value="products">Import Products Only</option>
+                          <option value="categories">Import Categories Only</option>
+                          <option value="orders">Import Orders (Backup)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700 mb-2 block">Upload JSON File</label>
+                        <Input
+                          type="file"
+                          accept=".json"
+                          onChange={handleFileImport}
+                          className="cursor-pointer"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Select the JSON file exported from this system
+                        </p>
+                      </div>
+
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                        <p className="text-sm text-yellow-800 flex items-start gap-2">
+                          <span className="font-semibold">⚠️ Warning:</span>
+                          <span>Importing orders will create duplicate order numbers. Use imports only for data migration or backup restoration.</span>
+                        </p>
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p className="text-sm text-blue-800 flex items-start gap-2">
+                          <span className="font-semibold">ℹ️ Note:</span>
+                          <span>Existing data (same email, product name, or order number) will be skipped during import.</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Tables Tab (Food POS) */}
+          {posConfig?.features.tableManagement && (
+            <TabsContent value="tables">
+              <Card className="shadow-xl">
+                <CardHeader className="bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <LayoutGrid className="h-6 w-6" />
+                    Table Management
+                  </CardTitle>
+                  <CardDescription className="text-teal-100">
+                    Manage restaurant tables and seating
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
+                      <Card key={num} className="cursor-pointer hover:shadow-lg transition-all border-2 border-teal-200 hover:border-teal-500">
+                        <CardContent className="p-4 text-center">
+                          <div className="bg-gradient-to-br from-teal-100 to-teal-200 rounded-lg p-4 mb-2">
+                            <LayoutGrid className="h-8 w-8 mx-auto text-teal-600" />
+                          </div>
+                          <h4 className="font-semibold">Table {num}</h4>
+                          <Badge className="mt-2 bg-green-100 text-green-700">Available</Badge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  <div className="mt-6 p-4 bg-teal-50 rounded-lg">
+                    <p className="text-sm text-teal-800">
+                      💡 Click on a table to view orders, start a new order, or manage reservations. 
+                      Tables show their current status: Available (Green), Occupied (Red), Reserved (Yellow).
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* KDS Tab (Food POS) */}
+          {posConfig?.features.kitchenDisplay && (
+            <TabsContent value="kds">
+              <Card className="shadow-xl">
+                <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <Armchair className="h-6 w-6" />
+                    Kitchen Display System
+                  </CardTitle>
+                  <CardDescription className="text-orange-100">
+                    Real-time order tracking for kitchen staff
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3].map((order) => (
+                      <Card key={order} className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <Badge className="bg-orange-500 text-white">Table {order}</Badge>
+                            <span className="text-sm text-gray-500">Order #{1000 + order}</span>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                              <span className="font-medium">2x Burger</span>
+                              <Badge className="bg-yellow-400 text-yellow-900">Preparing</Badge>
+                            </div>
+                            <div className="flex justify-between items-center p-2 bg-white rounded-lg">
+                              <span className="font-medium">1x Fries</span>
+                              <Badge className="bg-yellow-400 text-yellow-900">Preparing</Badge>
+                            </div>
+                          </div>
+                          <Button className="w-full mt-4 bg-gradient-to-r from-green-500 to-green-600">
+                            Mark as Ready
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Returns Tab (Garment/Retail POS) */}
+          {posConfig?.features.returns && (
+            <TabsContent value="returns">
+              <Card className="shadow-xl">
+                <CardHeader className="bg-gradient-to-r from-red-500 to-red-600 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <RotateCw className="h-6 w-6" />
+                    Returns & Exchanges
+                  </CardTitle>
+                  <CardDescription className="text-red-100">
+                    Manage product returns and exchanges
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <h4 className="font-semibold text-red-800 mb-2">Recent Returns</h4>
+                      <p className="text-sm text-gray-600">No returns in progress</p>
+                    </div>
+                    <Button className="w-full bg-gradient-to-r from-red-500 to-red-600">
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Return Request
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Gift Cards Tab */}
+          {posConfig?.features.giftCards && (
+            <TabsContent value="giftcards">
+              <Card className="shadow-xl">
+                <CardHeader className="bg-gradient-to-r from-pink-500 to-pink-600 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <Card className="h-6 w-6" />
+                    Gift Cards
+                  </CardTitle>
+                  <CardDescription className="text-pink-100">
+                    Issue and manage gift cards
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  {/* Gift Card Lookup */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Check Gift Card Balance</h3>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter card number"
+                        value={giftCardLookup}
+                        onChange={(e) => setGiftCardLookup(e.target.value)}
+                      />
+                      <Button className="bg-gradient-to-r from-pink-500 to-pink-600">
+                        Check
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Issue New Gift Card */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-3">Issue New Gift Card</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input placeholder="Card Number" />
+                      <Input type="password" placeholder="PIN" />
+                      <Input type="number" placeholder="Initial Balance (₹)" />
+                      <Input type="date" placeholder="Expiry Date" />
+                    </div>
+                    <Button className="w-full mt-4 bg-gradient-to-r from-pink-500 to-pink-600">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Issue Gift Card
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Cash Drawer Tab */}
+          {posConfig?.features.cashDrawer && (
+            <TabsContent value="cashdrawer">
+              <Card className="shadow-xl">
+                <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <Wallet className="h-6 w-6" />
+                    Cash Drawer
+                  </CardTitle>
+                  <CardDescription className="text-green-100">
+                    Manage cash drawer and transactions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="border-2 border-green-200">
+                      <CardContent className="p-4 text-center">
+                        <p className="text-sm text-gray-600">Opening Balance</p>
+                        <p className="text-2xl font-bold text-green-600">₹5,000.00</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="border-2 border-blue-200">
+                      <CardContent className="p-4 text-center">
+                        <p className="text-sm text-gray-600">Cash In</p>
+                        <p className="text-2xl font-bold text-blue-600">₹12,500.00</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="border-2 border-purple-200">
+                      <CardContent className="p-4 text-center">
+                        <p className="text-sm text-gray-600">Current Balance</p>
+                        <p className="text-2xl font-bold text-purple-600">₹17,500.00</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <div className="mt-6 flex gap-2">
+                    <Button className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Cash In
+                    </Button>
+                    <Button className="flex-1 bg-gradient-to-r from-red-500 to-red-600">
+                      <Minus className="h-4 w-4 mr-2" />
+                      Cash Out
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Barcode Tab (Retail POS) */}
+          {posConfig?.features.barcodes && (
+            <TabsContent value="barcode">
+              <Card className="shadow-xl">
+                <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <ScanBarcode className="h-6 w-6" />
+                    Barcode Scanner
+                  </CardTitle>
+                  <CardDescription className="text-blue-100">
+                    Scan barcodes to quickly add products to cart
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Input
+                        placeholder="Scan or enter barcode..."
+                        value={barcodeInput}
+                        onChange={(e) => setBarcodeInput(e.target.value)}
+                        className="text-lg h-14"
+                      />
+                    </div>
+                    {barcodeProduct && (
+                      <Card className="border-2 border-green-200 bg-green-50">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-semibold text-lg">{barcodeProduct.name}</h4>
+                              <p className="text-sm text-gray-600">Price: ₹{barcodeProduct.price?.toFixed(2)}</p>
+                            </div>
+                            <Button className="bg-gradient-to-r from-green-500 to-green-600">
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add to Cart
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        💡 Scan product barcodes using a barcode scanner or manually enter the barcode number to quickly add products to your cart.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          {/* Variants Tab (Garment POS) */}
+          {posConfig?.features.sizeVariants && (
+            <TabsContent value="variants">
+              <Card className="shadow-xl">
+                <CardHeader className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
+                  <CardTitle className="flex items-center gap-2">
+                    <Tag className="h-6 w-6" />
+                    Product Variants
+                  </CardTitle>
+                  <CardDescription className="text-indigo-100">
+                    Manage size and color variants for products
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <div className="text-center py-12 text-gray-500">
+                    <Tag className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                    <p className="font-medium text-lg">Product variants management</p>
+                    <p className="text-sm mt-2">Create and manage size/color variants for your products</p>
+                    <Button className="mt-4 bg-gradient-to-r from-indigo-500 to-indigo-600">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Variant
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+        </Tabs>
+      </main>
+
+      {/* Held Orders Dialog */}
+      <Dialog open={heldOrdersOpen} onOpenChange={setHeldOrdersOpen}>
+        <DialogContent className="max-w-4xl border-0 shadow-2xl max-h-[85vh]">
+          <DialogHeader className="bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                  <Clock className="h-7 w-7" />
+                  Held Orders
+                </DialogTitle>
+                <DialogDescription className="text-amber-100">
+                  Saved orders ready for recall
+                </DialogDescription>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setHeldOrdersOpen(false)}
+                className="bg-white/20 hover:bg-white/30 text-white border-0"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <div className="p-6">
+            {heldOrders.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                <Clock className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                <p className="font-medium text-lg">No held orders yet</p>
+                <p className="text-sm mt-2">Use the "Hold" button to save orders for later</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {heldOrders.map((order) => (
+                  <Card key={order.id} className="border-2 border-amber-200 hover:border-amber-400 transition-all hover:shadow-lg">
+                    <CardHeader className="bg-gradient-to-br from-amber-50 to-amber-100 p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-amber-100 p-2 rounded-lg">
+                              <Clock className="h-5 w-5 text-amber-600" />
+                            </div>
+                            <div>
+                              <CardTitle className="text-base font-semibold">
+                                {order.customerName || 'Walk-in Customer'}
+                              </CardTitle>
+                              <CardDescription className="text-amber-700 text-xs mt-1">
+                                Held {new Date(order.heldAt).toLocaleDateString('en-IN', {
+                                  day: '2-digit',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })} by {order.heldBy}
+                              </CardDescription>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleRecallOrder(order.id)}
+                            className="bg-amber-600 hover:bg-amber-700 text-white"
+                          >
+                            <RotateCcw className="h-4 w-4 mr-1" />
+                            Recall
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteHeldOrder(order.id)}
+                            className="hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-semibold">Items:</span>
+                          <span>{order.items.length} items</span>
+                        </div>
+                        <div className="border-t border-2 border-gray-300 pt-3">
+                          {order.items.map((item) => (
+                            <div key={item.menuItem.id} className="flex items-center justify-between py-2">
+                              <div className="flex-1 flex flex-col">
+                                <span className="font-medium">{item.menuItem.name}</span>
+                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                  <span>Qty: {item.quantity}</span>
+                                  <span>x ₹{item.price.toFixed(2)}</span>
+                                </div>
+                              </div>
+                              <span className="font-bold">₹{item.subtotal.toFixed(2)}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="border-t-2 border-gray-300 pt-3 space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Subtotal:</span>
+                            <span className="font-semibold">₹{order.subtotal.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-green-700">
+                            <span>CGST:</span>
+                            <span className="font-semibold">₹{order.sgst.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-sm text-green-700">
+                            <span>SGST:</span>
+                            <span className="font-semibold">₹{order.cgst.toFixed(2)}</span>
+                          </div>
+                          <Separator />
+                          <div className="flex justify-between text-xl font-bold">
+                            <span>Total:</span>
+                            <span className="font-bold text-amber-600">₹{order.total.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-3 p-6 border-t-2 border-amber-200">
+            <Button
+              variant="outline"
+              onClick={() => setHeldOrdersOpen(false)}
+              className="flex-1 h-11 border-amber-200 hover:bg-amber-50"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Receipt Dialog */}
+      <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
+        <DialogContent className="max-w-md border-0 shadow-2xl">
+          <DialogHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Receipt className="h-5 w-5" />
+              Order Receipt
+            </DialogTitle>
+            <DialogDescription className="text-amber-100">
+              {selectedOrderForReceipt ? `Order #${selectedOrderForReceipt.orderNumber}` : ''}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrderForReceipt && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Order #:</span>
+                  <span className="font-semibold">{selectedOrderForReceipt.orderNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Date:</span>
+                  <span className="font-semibold">{new Date(selectedOrderForReceipt.createdAt).toLocaleString('en-IN')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Customer:</span>
+                  <span className="font-semibold">{selectedOrderForReceipt.customerName || 'Walk-in'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Items:</span>
+                  <span className="font-semibold">{selectedOrderForReceipt.items?.length || 0} items</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between text-lg font-bold">
+                  <span className="text-gray-700">Total:</span>
+                  <span className="text-amber-600">{formatCurrency(selectedOrderForReceipt.totalAmount)}</span>
+                </div>
+              </div>
+
+              <DialogFooter className="gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setReceiptDialogOpen(false)}
+                  className="flex-1"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Close
+                </Button>
+                <Button
+                  onClick={handlePrintReceipt}
+                  className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Receipt
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* WhatsApp Receipt Dialog */}
+      <Dialog open={sendWhatsAppDialogOpen} onOpenChange={setSendWhatsAppDialogOpen}>
+        <DialogContent className="max-w-md border-0 shadow-2xl">
+          <DialogHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Send via WhatsApp
+            </DialogTitle>
+            <DialogDescription className="text-green-100">
+              Send receipt to customer's WhatsApp
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-2 block">Phone Number</label>
+              <Input
+                type="tel"
+                placeholder="+91 98765 43210"
+                value={receiptPhone}
+                onChange={(e) => setReceiptPhone(e.target.value)}
+                className="text-base"
+              />
+              <p className="text-xs text-gray-500 mt-1">Format: +91 followed by 10-digit number</p>
+            </div>
+
+            {selectedOrderForReceipt && (
+              <div className="bg-gray-50 p-3 rounded-lg text-sm">
+                <p className="text-gray-600 mb-1">Order #<span className="font-semibold">{selectedOrderForReceipt.orderNumber}</span></p>
+                <p className="text-amber-600 font-bold">Total: {formatCurrency(selectedOrderForReceipt.totalAmount)}</p>
+              </div>
+            )}
+
+            <DialogFooter className="gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setSendWhatsAppDialogOpen(false)}
+                className="flex-1"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSendWhatsApp}
+                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Send via WhatsApp
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Receipt Dialog */}
+      <Dialog open={sendEmailDialogOpen} onOpenChange={setSendEmailDialogOpen}>
+        <DialogContent className="max-w-md border-0 shadow-2xl">
+          <DialogHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Send via Email
+            </DialogTitle>
+            <DialogDescription className="text-blue-100">
+              Send receipt to customer's email
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-2 block">Email Address</label>
+              <Input
+                type="email"
+                placeholder="customer@example.com"
+                value={receiptEmail}
+                onChange={(e) => setReceiptEmail(e.target.value)}
+                className="text-base"
+              />
+            </div>
+
+            {selectedOrderForReceipt && (
+              <div className="bg-gray-50 p-3 rounded-lg text-sm">
+                <p className="text-gray-600 mb-1">Order #<span className="font-semibold">{selectedOrderForReceipt.orderNumber}</span></p>
+                <p className="text-amber-600 font-bold">Total: {formatCurrency(selectedOrderForReceipt.totalAmount)}</p>
+              </div>
+            )}
+
+            <DialogFooter className="gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setSendEmailDialogOpen(false)}
+                className="flex-1"
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSendEmail}
+                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Send Email
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Profile Dialog */}
+      <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+        <DialogContent className="max-w-md border-0 shadow-2xl">
+          <DialogHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <User className="h-6 w-6" />
+              My Profile
+            </DialogTitle>
+            <DialogDescription className="text-blue-100">
+              Update your personal information
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Name</label>
+              <Input
+                value={profileData.name}
+                onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                placeholder="Your name"
+                className="h-11"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Email</label>
+              <Input
+                type="email"
+                value={profileData.email}
+                onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                placeholder="your@email.com"
+                className="h-11"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Phone</label>
+              <Input
+                type="tel"
+                value={profileData.phone}
+                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                placeholder="+91 98765 43210"
+                className="h-11"
+              />
+            </div>
+            <Separator className="my-4" />
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-blue-800 flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                <span>Want to change your password? Use the button below.</span>
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="bg-gray-50 rounded-b-lg -mx-6 -mb-6 px-6 pb-6">
+            <div className="flex gap-2 w-full">
+              <Button
+                onClick={() => {
+                  setProfileDialogOpen(false)
+                  setPasswordDialogOpen(true)
+                }}
+                className="flex-1 h-11 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+              >
+                <Key className="h-4 w-4 mr-2" />
+                Change Password
+              </Button>
+              <Button
+                onClick={handleUpdateProfile}
+                disabled={profileLoading}
+                className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+              >
+                {profileLoading ? 'Saving...' : 'Save Profile'}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Password Change Dialog */}
+      <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <DialogContent className="max-w-md border-0 shadow-2xl">
+          <DialogHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <Key className="h-6 w-6" />
+              Change Password
+            </DialogTitle>
+            <DialogDescription className="text-purple-100">
+              Update your password for better security
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Current Password</label>
+              <Input
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                placeholder="Enter your current password"
+                className="h-11"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">New Password</label>
+              <Input
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                placeholder="Enter new password"
+                className="h-11"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Confirm New Password</label>
+              <Input
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                placeholder="Confirm new password"
+                className="h-11"
+              />
+            </div>
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <p className="text-sm text-purple-800">
+                <span className="font-semibold">Password Requirements:</span>
+                <ul className="list-disc list-inside mt-2 space-y-1">
+                  <li>Minimum 6 characters</li>
+                  <li>Should be different from current password</li>
+                  <li>New password and confirm password must match</li>
+                </ul>
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="bg-gray-50 rounded-b-lg -mx-6 -mb-6 px-6 pb-6">
+            <div className="flex gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPasswordDialogOpen(false)
+                  setPasswordData({
+                    currentPassword: '',
+                    newPassword: '',
+                    confirmPassword: ''
+                  })
+                }}
+                className="flex-1 h-11"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleChangePassword}
+                disabled={passwordLoading}
+                className="flex-1 h-11 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+              >
+                {passwordLoading ? 'Changing...' : 'Change Password'}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Footer */}
+      <footer className="bg-white border-t-2 border-amber-200 mt-auto">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center gap-3">
+              <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-lg">
+                <Coffee className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <span className="font-semibold">Coffee Shop POS</span>
+                <span className="mx-2">•</span>
+                <span className="text-gray-500">India GST Compliant</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-xs">
+              <span>Support: +91 98765 43210</span>
+              <span className="text-gray-400">|</span>
+              <span>Version 1.0.0</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  )
+}
+
+export default function Page() {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loginData, setLoginData] = useState({ email: '', password: '' })
+  const [loginError, setLoginError] = useState('')
+  const [loginTab, setLoginTab] = useState<'email' | 'sms'>('email')
+  const [smsLoginData, setSmsLoginData] = useState({ phone: '', otp: '' })
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpLoading, setOtpLoading] = useState(false)
+  const [smsLoginError, setSmsLoginError] = useState('')
+
+  useEffect(() => {
+    // Check for existing user session
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/auth/me')
+        if (res.ok) {
+          const userData = await res.json()
+          setUser(userData)
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    checkAuth()
+  }, [])
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoginError('')
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginData)
+      })
+
+      if (res.ok) {
+        const userData = await res.json()
+        setUser(userData)
+        toast.success('Welcome back!')
+      } else {
+        const error = await res.json()
+        setLoginError(error.message || 'Login failed')
+        toast.error('Login failed')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      setLoginError('An error occurred')
+      toast.error('Login failed')
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      setUser(null)
+      toast.success('Logged out successfully')
+    } catch (error) {
+      console.error('Logout error:', error)
+      toast.error('Logout failed')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
+      </div>
+    )
+  }
+
+  const handleSendOTP = async () => {
+    setSmsLoginError('')
+    setOtpLoading(true)
+
+    try {
+      const res = await fetch('/api/auth/sms/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: smsLoginData.phone })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setOtpSent(true)
+        toast.success(data.message || 'OTP sent successfully')
+        if (data.development) {
+          toast.info(`Development OTP: ${data.development}`)
+        }
+      } else {
+        const error = await res.json()
+        setSmsLoginError(error.error || 'Failed to send OTP')
+        toast.error('Failed to send OTP')
+      }
+    } catch (error) {
+      console.error('OTP send error:', error)
+      setSmsLoginError('An error occurred')
+      toast.error('Failed to send OTP')
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSmsLoginError('')
+
+    try {
+      const res = await fetch('/api/auth/sms/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: smsLoginData.phone, otp: smsLoginData.otp })
+      })
+
+      if (res.ok) {
+        const userData = await res.json()
+        setUser(userData.user)
+        toast.success('Login successful!')
+      } else {
+        const error = await res.json()
+        setSmsLoginError(error.error || 'Invalid OTP')
+        toast.error('Invalid OTP')
+      }
+    } catch (error) {
+      console.error('OTP verify error:', error)
+      setSmsLoginError('An error occurred')
+      toast.error('Verification failed')
+    }
+  }
+
+  const handleResendOTP = () => {
+    setOtpSent(false)
+    setSmsLoginData({ ...smsLoginData, otp: '' })
+    handleSendOTP()
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 p-4">
+        <Card className="w-full max-w-md shadow-2xl border-2 border-amber-200">
+          <CardHeader className="bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-t-lg p-8">
+            <div className="flex flex-col items-center gap-4">
+              <div className="bg-white/20 p-4 rounded-full">
+                <Coffee className="h-12 w-12" />
+              </div>
+              <div className="text-center">
+                <CardTitle className="text-3xl font-bold">Coffee Shop POS</CardTitle>
+                <CardDescription className="text-amber-100 mt-2">
+                  Sign in to continue
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-8">
+            <Tabs value={loginTab} onValueChange={(v) => { setLoginTab(v as 'email' | 'sms'); setLoginError(''); setSmsLoginError('') }}>
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="email" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email
+                </TabsTrigger>
+                <TabsTrigger value="sms" className="flex items-center gap-2">
+                  <Smartphone className="h-4 w-4" />
+                  SMS OTP
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="email">
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="admin@coffeeshop.com"
+                      value={loginData.email}
+                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                      Password
+                    </label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                      className="h-11"
+                      required
+                    />
+                  </div>
+                  {loginError && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                      {loginError}
+                    </div>
+                  )}
+                  <Button
+                    type="submit"
+                    className="w-full h-11 text-base font-semibold bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
+                  >
+                    Sign In
+                  </Button>
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="sms">
+                <form onSubmit={handleVerifyOTP} className="space-y-6">
+                  {!otpSent ? (
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                          Phone Number
+                        </label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          placeholder="9876543210"
+                          value={smsLoginData.phone}
+                          onChange={(e) => setSmsLoginData({ ...smsLoginData, phone: e.target.value })}
+                          className="h-11"
+                          required
+                        />
+                        <p className="text-xs text-gray-500">
+                          Enter your phone number to receive an OTP
+                        </p>
+                      </div>
+                      {smsLoginError && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                          {smsLoginError}
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        onClick={handleSendOTP}
+                        disabled={otpLoading || !smsLoginData.phone}
+                        className="w-full h-11 text-base font-semibold bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
+                      >
+                        {otpLoading ? 'Sending...' : 'Send OTP'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <label htmlFor="otp" className="text-sm font-medium text-gray-700">
+                          Enter OTP
+                        </label>
+                        <Input
+                          id="otp"
+                          type="text"
+                          placeholder="123456"
+                          value={smsLoginData.otp}
+                          onChange={(e) => setSmsLoginData({ ...smsLoginData, otp: e.target.value })}
+                          className="h-11 text-center text-2xl tracking-widest"
+                          maxLength={6}
+                          required
+                          autoFocus
+                        />
+                        <p className="text-xs text-gray-500">
+                          Enter the 6-digit code sent to {smsLoginData.phone}
+                        </p>
+                      </div>
+                      {smsLoginError && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                          {smsLoginError}
+                        </div>
+                      )}
+                      <Button
+                        type="submit"
+                        disabled={!smsLoginData.otp || smsLoginData.otp.length !== 6}
+                        className="w-full h-11 text-base font-semibold bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
+                      >
+                        Verify & Login
+                      </Button>
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          onClick={handleResendOTP}
+                          className="text-sm text-amber-600 hover:text-amber-700 underline"
+                        >
+                          Resend OTP
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </form>
+              </TabsContent>
+            </Tabs>
+            <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+              {loginTab === 'email' ? (
+                <>
+                  <p className="text-xs text-gray-600 text-center mb-2">
+                    Demo Accounts:
+                  </p>
+                  <div className="space-y-1 text-xs text-gray-500">
+                    <p>Admin: admin@coffeeshop.com</p>
+                    <p>Manager: manager@coffeeshop.com</p>
+                    <p>Cashier: cashier@coffeeshop.com</p>
+                    <p className="mt-2 italic">Password: password123</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-600 text-center mb-2">
+                    Test SMS Login:
+                  </p>
+                  <div className="space-y-1 text-xs text-gray-500">
+                    <p>Phone: 9876543210</p>
+                    <p className="italic">OTP will be shown in a toast for testing</p>
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return <POSDashboard user={user} onLogout={handleLogout} />
+}
