@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -37,7 +37,7 @@ import {
   Printer,
   Clock,
   Pause,
-  RotateCcw,
+  RotateCw,
   X,
   Brain,
   Mail,
@@ -51,178 +51,151 @@ import {
   Armchair,
   ScanBarcode,
   Tag,
-  RotateCw,
+  RotateCcw,
   Wallet,
   Key,
   Shield
 } from 'lucide-react'
-
-interface POSConfig {
-  posType: string
-  name: string
-  features: {
-    tableManagement: boolean
-    kitchenDisplay: boolean
-    modifiers: boolean
-    sizeVariants: boolean
-    colorVariants: boolean
-    barcodes: boolean
-    serialNumbers: boolean
-    returns: boolean
-    exchanges: boolean
-    loyaltyProgram: boolean
-    discounts: boolean
-    refunds: boolean
-    cashDrawer: boolean
-    staffPerformance: boolean
-    giftCards: boolean
-    orders: boolean
-    inventory: boolean
-    reservations: boolean
-    waitlist: boolean
-  }
-  capabilities: string[]
-}
-
-interface User {
-  id: string
-  email: string
-  name: string
-  role: string
-  phone?: string | null
-}
-
-interface MenuItem {
-  id: string
-  name: string
-  description: string | null
-  price: number
-  gstRate: string
-  hsnCode: string | null
-  categoryId: string
-  isAvailable: boolean
-  category: {
-    name: string
-  }
-}
-
-interface CartItem {
-  menuItem: MenuItem
-  quantity: number
-  subtotal: number
-  gstAmount: number
-}
-
-interface Order {
-  id: string
-  orderNumber: string
-  totalAmount: number
-  status: string
-  paymentMethod: string
-  createdAt: string
-  items: Array<{
-    menuItem: {
-      name: string
-      price: number
-    }
-    quantity: number
-  }>
-}
+import {
+  useAuthStore,
+  useMenuStore,
+  useCartStore,
+  useOrdersStore,
+  useCheckoutStore,
+  useUIStore,
+  usePOSConfigStore,
+  useReportsStore,
+  useReceiptsStore,
+  useTablesStore,
+  useVariantsStore,
+  useBarcodeStore,
+  useReturnsStore,
+  useCashDrawerStore,
+  useGiftCardsStore,
+  useProfileStore,
+  useAIInsightsStore
+} from '@/store'
 
 interface DashboardProps {
-  user: User
+  user: any
+  setUser: (user: any) => void
   onLogout: () => void
 }
 
-export function POSDashboard({ user, onLogout }: DashboardProps) {
-  const [menuItems, setMenuItems] = useState<MenuItem[]>([])
-  const [categories, setCategories] = useState<any[]>([])
-  const [cart, setCart] = useState<CartItem[]>([])
-  const [orders, setOrders] = useState<Order[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [checkoutOpen, setCheckoutOpen] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'UPI' | 'CARD'>('CASH')
-  const [customerPhone, setCustomerPhone] = useState('')
-  const [customerName, setCustomerName] = useState('')
-  const [notes, setNotes] = useState('')
-  const [activeTab, setActiveTab] = useState('pos')
-  const [heldOrders, setHeldOrders] = useState<any[]>([])
-  const [heldOrdersOpen, setHeldOrdersOpen] = useState(false)
+export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
+  // Menu Store
+  const {
+    menuItems, setMenuItems,
+    categories, setCategories,
+    selectedCategory, setSelectedCategory,
+    searchQuery, setSearchQuery
+  } = useMenuStore()
 
-  // GST Rate mapper - Convert enum strings to percentage values
-  const getGstPercentage = (gstRate: string): number => {
-    const gstMap: Record<string, number> = {
-      'ZERO': 0,
-      'FIVE': 5,
-      'TWELVE': 12,
-      'EIGHTEEN': 18,
-      'TWENTY_EIGHT': 28
-    }
-    return gstMap[gstRate] || 0
-  }
+  // Cart Store
+  const {
+    cart, setCart, addToCart, updateQuantity, removeFromCart, clearCart
+  } = useCartStore()
 
-  // POS Configuration state
-  const [posConfig, setPosConfig] = useState<POSConfig | null>(null)
-  const [posConfigLoading, setPosConfigLoading] = useState(true)
+  // Orders Store
+  const {
+    orders, setOrders,
+    heldOrders, setHeldOrders,
+    heldOrdersOpen, setHeldOrdersOpen
+  } = useOrdersStore()
 
-  // AI Insights state
-  const [aiInsights, setAiInsights] = useState<any>(null)
-  const [aiInsightsLoading, setAiInsightsLoading] = useState(false)
+  // Checkout Store
+  const {
+    checkoutOpen, setCheckoutOpen,
+    paymentMethod, setPaymentMethod,
+    customerPhone, setCustomerPhone,
+    customerName, setCustomerName,
+    notes, setNotes
+  } = useCheckoutStore()
 
-  // Reports state
-  const [reportType, setReportType] = useState<'sales' | 'inventory' | 'items' | 'payments' | 'customers' | 'comprehensive'>('sales')
-  const [reportData, setReportData] = useState<any>(null)
-  const [reportLoading, setReportLoading] = useState(false)
-  const [reportStartDate, setReportStartDate] = useState('')
-  const [reportEndDate, setReportEndDate] = useState('')
-  const [reportGroupBy, setReportGroupBy] = useState('day')
+  // UI Store
+  const { activeTab, setActiveTab } = useUIStore()
 
-  // Receipt state
-  const [receiptDialogOpen, setReceiptDialogOpen] = useState(false)
-  const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState<any>(null)
-  const [sendWhatsAppDialogOpen, setSendWhatsAppDialogOpen] = useState(false)
-  const [sendEmailDialogOpen, setSendEmailDialogOpen] = useState(false)
-  const [receiptPhone, setReceiptPhone] = useState('')
-  const [receiptEmail, setReceiptEmail] = useState('')
+  // POS Config Store
+  const {
+    posConfig, setPosConfig,
+    loading: posConfigLoading,
+    setLoading: setPosConfigLoading
+  } = usePOSConfigStore()
 
-  // Tables state (Food POS)
-  const [tables, setTables] = useState<any[]>([])
-  const [selectedTable, setSelectedTable] = useState<any>(null)
-  
-  // Variants state (Garment POS)
-  const [selectedVariant, setSelectedVariant] = useState<any>(null)
-  
-  // Barcode state (Retail POS)
-  const [barcodeInput, setBarcodeInput] = useState('')
-  const [barcodeProduct, setBarcodeProduct] = useState<any>(null)
-  
-  // Returns state
-  const [returns, setReturns] = useState<any[]>([])
-  
-  // Cash drawer state
-  const [cashDrawer, setCashDrawer] = useState<any>(null)
-  
-  // Gift cards state
-  const [giftCards, setGiftCards] = useState<any[]>([])
-  const [giftCardLookup, setGiftCardLookup] = useState('')
-  const [giftCardBalance, setGiftCardBalance] = useState<any>(null)
+  // AI Insights Store
+  const {
+    aiInsights, setAiInsights,
+    loading: aiInsightsLoading,
+    setLoading: setAiInsightsLoading
+  } = useAIInsightsStore()
 
-  // Profile state
-  const [profileDialogOpen, setProfileDialogOpen] = useState(false)
-  const [profileData, setProfileData] = useState({
-    name: '',
-    email: '',
-    phone: ''
-  })
-  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false)
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  })
-  const [profileLoading, setProfileLoading] = useState(false)
-  const [passwordLoading, setPasswordLoading] = useState(false)
+  // Reports Store
+  const {
+    reportType, setReportType,
+    reportData, setReportData,
+    loading: reportLoading,
+    setLoading: setReportLoading,
+    reportStartDate, setReportStartDate,
+    reportEndDate, setReportEndDate,
+    reportGroupBy, setReportGroupBy
+  } = useReportsStore()
+
+  // Receipts Store
+  const {
+    receiptDialogOpen, setReceiptDialogOpen,
+    selectedOrderForReceipt, setSelectedOrderForReceipt,
+    sendWhatsAppDialogOpen, setSendWhatsAppDialogOpen,
+    sendEmailDialogOpen, setSendEmailDialogOpen,
+    receiptPhone, setReceiptPhone,
+    receiptEmail, setReceiptEmail
+  } = useReceiptsStore()
+
+  // Tables Store
+  const {
+    tables, setTables,
+    selectedTable, setSelectedTable
+  } = useTablesStore()
+
+  // Variants Store
+  const {
+    selectedVariant, setSelectedVariant
+  } = useVariantsStore()
+
+  // Barcode Store
+  const {
+    barcodeInput, setBarcodeInput,
+    barcodeProduct, setBarcodeProduct
+  } = useBarcodeStore()
+
+  // Returns Store
+  const {
+    returns, setReturns
+  } = useReturnsStore()
+
+  // Cash Drawer Store
+  const {
+    cashDrawer, setCashDrawer
+  } = useCashDrawerStore()
+
+  // Gift Cards Store
+  const {
+    giftCards, setGiftCards,
+    giftCardLookup, setGiftCardLookup,
+    giftCardBalance, setGiftCardBalance
+  } = useGiftCardsStore()
+
+  // Profile Store
+  const {
+    profileDialogOpen, setProfileDialogOpen,
+    profileData, setProfileData,
+    passwordDialogOpen, setPasswordDialogOpen,
+    passwordData, setPasswordData,
+    profileLoading, setProfileLoading,
+    passwordLoading, setPasswordLoading
+  } = useProfileStore()
+
+  // Cart Store computed values
+  const { subtotal, totalGst, total } = useCartStore()
 
   // Fetch menu items, categories, and orders
   useEffect(() => {
@@ -568,60 +541,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
     return matchesCategory && matchesSearch && isAvailable
   })
 
-  // Add item to cart
-  const addToCart = (menuItem: MenuItem) => {
-    const existingItem = cart.find(item => item.menuItem.id === menuItem.id)
-    
-    if (existingItem) {
-      updateQuantity(menuItem.id, existingItem.quantity + 1)
-    } else {
-      const gstPercentage = getGstPercentage(menuItem.gstRate)
-      const gstAmount = menuItem.price * (gstPercentage / 100)
-      const newItem: CartItem = {
-        menuItem,
-        quantity: 1,
-        subtotal: menuItem.price,
-        gstAmount: gstAmount
-      }
-      setCart([...cart, newItem])
-    }
-    toast.success(`Added ${menuItem.name} to cart`)
-  }
-
-  // Update quantity of item in cart
-  const updateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(itemId)
-      return
-    }
-
-    setCart(cart.map(item => {
-      if (item.menuItem.id === itemId) {
-        const gstPercentage = getGstPercentage(item.menuItem.gstRate)
-        const gstAmount = item.menuItem.price * newQuantity * (gstPercentage / 100)
-        const subtotal = item.menuItem.price * newQuantity
-        return {
-          ...item,
-          quantity: newQuantity,
-          subtotal,
-          gstAmount
-        }
-      }
-      return item
-    }))
-    toast.success('Cart updated')
-  }
-
-  // Remove item from cart
-  const removeFromCart = (itemId: string) => {
-    setCart(cart.filter(item => item.menuItem.id !== itemId))
-    toast.success('Item removed from cart')
-  }
-
-  // Calculate totals with NaN protection
-  const subtotal = cart.reduce((sum, item) => sum + (item.subtotal || 0), 0)
-  const totalGst = cart.reduce((sum, item) => sum + (item.gstAmount || 0), 0)
-  const total = subtotal + totalGst
+  // Calculate totals with NaN protection (using cart store computed values)
   const sgst = totalGst / 2
   const cgst = totalGst / 2
 
@@ -667,7 +587,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
       if (response.ok) {
         const order = await response.json()
         toast.success('Order placed successfully!')
-        setCart([])
+        clearCart()
         setCustomerName('')
         setCustomerPhone('')
         setNotes('')
@@ -720,7 +640,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
       localStorage.setItem('heldOrders', JSON.stringify(updatedHeld))
 
       setHeldOrders(updatedHeld)
-      setCart([])
+      clearCart()
       setCustomerName('')
       setCustomerPhone('')
       setNotes('')
@@ -770,7 +690,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
 
     if (!confirm('Are you sure you want to cancel this order?')) return
 
-    setCart([])
+    clearCart()
     setCustomerName('')
     setCustomerPhone('')
     setNotes('')
@@ -822,9 +742,9 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+    <div className="min-h-screen flex flex-col bg-linear-to-br from-orange-50 via-amber-50 to-yellow-50">
       {/* Header */}
-      <header className="bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-xl">
+      <header className="bg-linear-to-br from-amber-600 to-orange-600 text-white shadow-xl">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm">
@@ -884,81 +804,81 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
 
       <main className="flex-1 container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-1 mb-6 bg-white shadow-lg p-2 rounded-xl border-amber-200 overflow-x-auto">
-            <TabsTrigger value="pos" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-1 mb-2 bg-white shadow-lg p-2 rounded-xl border-amber-200">
+            <TabsTrigger value="pos" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
               <ShoppingCart className="h-4 w-4 mr-2" />
               POS
             </TabsTrigger>
             {posConfig?.features.orders && (
-              <TabsTrigger value="orders" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+              <TabsTrigger value="orders" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
                 <Receipt className="h-4 w-4 mr-2" />
                 Orders
               </TabsTrigger>
             )}
             {posConfig?.features.tableManagement && (
-              <TabsTrigger value="tables" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
+              <TabsTrigger value="tables" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-teal-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
                 <LayoutGrid className="h-4 w-4 mr-2" />
                 Tables
               </TabsTrigger>
             )}
             {posConfig?.features.kitchenDisplay && (
-              <TabsTrigger value="kds" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+              <TabsTrigger value="kds" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-orange-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
                 <Armchair className="h-4 w-4 mr-2" />
                 KDS
               </TabsTrigger>
             )}
-            <TabsTrigger value="insights" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <TabsTrigger value="insights" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               <Brain className="h-4 w-4 mr-2" />
               AI Insights
             </TabsTrigger>
-            <TabsTrigger value="reports" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+            <TabsTrigger value="reports" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
               <BarChart3 className="h-4 w-4 mr-2" />
               Reports
             </TabsTrigger>
             {posConfig?.features.inventory && (
-              <TabsTrigger value="inventory" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+              <TabsTrigger value="inventory" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
                 <Package className="h-4 w-4 mr-2" />
                 Inventory
               </TabsTrigger>
             )}
             {(user.role === 'ADMIN' || user.role === 'MANAGER') && (
-              <TabsTrigger value="menu" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+              <TabsTrigger value="menu" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
                 <Utensils className="h-4 w-4 mr-2" />
                 Menu
               </TabsTrigger>
             )}
             {user.role === 'ADMIN' && (
-              <TabsTrigger value="settings" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+              <TabsTrigger value="settings" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
                 <Users className="h-4 w-4 mr-2" />
                 Staff
               </TabsTrigger>
             )}
             {posConfig?.features.returns && (
-              <TabsTrigger value="returns" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white">
+              <TabsTrigger value="returns" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-red-500 data-[state=active]:to-red-600 data-[state=active]:text-white">
                 <RotateCw className="h-4 w-4 mr-2" />
                 Returns
               </TabsTrigger>
             )}
             {posConfig?.features.giftCards && (
-              <TabsTrigger value="giftcards" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-pink-600 data-[state=active]:text-white">
-                <Card className="h-4 w-4 mr-2" />
+              <TabsTrigger value="giftcards" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-pink-500 data-[state=active]:to-pink-600 data-[state=active]:text-white">
+                {/* <Card className="h-4 w-4 mr-2" /> */}
                 Gift Cards
               </TabsTrigger>
             )}
             {posConfig?.features.cashDrawer && (
-              <TabsTrigger value="cashdrawer" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white">
+              <TabsTrigger value="cashdrawer" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-green-500 data-[state=active]:to-green-600 data-[state=active]:text-white">
                 <Wallet className="h-4 w-4 mr-2" />
                 Cash Drawer
               </TabsTrigger>
             )}
             {posConfig?.features.barcodes && (
-              <TabsTrigger value="barcode" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white">
+              <TabsTrigger value="barcode" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white">
                 <ScanBarcode className="h-4 w-4 mr-2" />
                 Barcode
               </TabsTrigger>
             )}
             {posConfig?.features.sizeVariants && (
-              <TabsTrigger value="variants" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
+              <TabsTrigger value="variants" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
                 <Tag className="h-4 w-4 mr-2" />
                 Variants
               </TabsTrigger>
@@ -966,8 +886,8 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           </TabsList>
 
           {/* POS Tab */}
-          <TabsContent value="pos" className="mt-0">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-220px)]">
+          <TabsContent value="pos" className="mt-0 h-full">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
               {/* Menu Section */}
               <div className="lg:col-span-2 flex flex-col gap-4">
                 {/* Category Filter */}
@@ -977,7 +897,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                     variant={selectedCategory === 'all' ? 'default' : 'outline'}
                     onClick={() => setSelectedCategory('all')}
                     className={selectedCategory === 'all' 
-                      ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg' 
+                      ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white shadow-lg' 
                       : 'bg-white hover:bg-amber-50 border-amber-200'
                     }
                   >
@@ -988,9 +908,9 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                       key={category.id}
                       variant={selectedCategory === category.id ? 'default' : 'outline'}
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`flex-shrink-0 flex items-center gap-2 ${
+                      className={`shrink-0 flex items-center gap-2 ${
                         selectedCategory === category.id
-                          ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg'
+                          ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white shadow-lg'
                           : 'bg-white hover:bg-amber-50 border-amber-200'
                       }`}
                     >
@@ -1021,7 +941,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                         className="cursor-pointer hover:shadow-2xl transition-all hover:scale-105 border-2 border-transparent hover:border-amber-400 group overflow-hidden bg-white"
                         onClick={() => addToCart(item)}
                       >
-                        <CardHeader className="p-4 pb-2 bg-gradient-to-br from-amber-50 to-orange-50 group-hover:from-amber-100 group-hover:to-orange-100 transition-colors">
+                        <CardHeader className="p-4 pb-2 bg-linear-to-br from-amber-50 to-orange-50 group-hover:from-amber-100 group-hover:to-orange-100 transition-colors">
                           <CardTitle className="text-base font-semibold line-clamp-1">
                             {item.name}
                           </CardTitle>
@@ -1034,7 +954,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                         <CardContent className="p-4 pt-2">
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                              <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                              <span className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-br from-amber-600 to-orange-600">
                                 ₹{item.price.toFixed(2)}
                               </span>
                               <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-200">
@@ -1042,7 +962,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                               </Badge>
                             </div>
                             </div>
-                            <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-lg shadow-lg group-hover:shadow-xl transition-all">
+                            <div className="bg-linear-to-br from-amber-500 to-orange-600 p-2 rounded-lg shadow-lg group-hover:shadow-xl transition-all">
                               <Plus className="h-5 w-5 text-white" />
                             </div>
                           </CardContent>
@@ -1063,7 +983,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
               {/* Cart Section */}
               <div className="flex flex-col gap-4">
                 <Card className="flex-1 flex flex-col shadow-xl border-0 overflow-hidden">
-                  <CardHeader className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-4">
+                  <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white p-4">
                     <CardTitle className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <ShoppingCart className="h-6 w-6" />
@@ -1080,7 +1000,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                   <CardContent className="flex-1 p-4 flex flex-col bg-white">
                     {cart.length === 0 ? (
                       <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-                        <div className="bg-gradient-to-br from-amber-100 to-orange-100 p-6 rounded-full mb-4">
+                        <div className="bg-linear-to-br from-amber-100 to-orange-100 p-6 rounded-full mb-4">
                           <ShoppingCart className="h-12 w-12 text-amber-400" />
                         </div>
                         <p className="font-medium">Your cart is empty</p>
@@ -1092,7 +1012,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                           {cart.map((item) => (
                             <div
                               key={item.menuItem.id}
-                              className="flex flex-col p-4 bg-gradient-to-br from-gray-50 to-amber-50 rounded-xl border border-gray-100 hover:border-amber-200 transition-all"
+                              className="flex flex-col p-4 bg-linear-to-br from-gray-50 to-amber-50 rounded-xl border border-gray-100 hover:border-amber-200 transition-all"
                             >
                               <div className="flex items-start justify-between gap-2">
                                 <div className="flex-1 min-w-0">
@@ -1100,14 +1020,14 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                                     {item.menuItem.name}
                                   </h4>
                                   <p className="text-xs text-gray-500 mt-1">
-                                    {formatCurrency(item.price)} each
+                                    {formatCurrency(item.menuItem.price)} each
                                   </p>
                                 </div>
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => removeFromCart(item.menuItem.id)}
-                                  className="hover:bg-red-50 hover:text-red-600 flex-shrink-0"
+                                  className="hover:bg-red-50 hover:text-red-600 shrink-0"
                                 >
                                   <Trash2 className="h-3 w-3" />
                                 </Button>
@@ -1118,7 +1038,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                                     size="icon"
                                     variant="outline"
                                     onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
-                                    className="h-9 w-9 hover:bg-amber-50 hover:border-amber-300"
+                                    className="h-8 w-8 hover:bg-amber-50 hover:border-amber-300"
                                     disabled={item.quantity <= 1}
                                   >
                                     <Minus className="h-3 w-3" />
@@ -1130,27 +1050,27 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                                     size="icon"
                                     variant="outline"
                                     onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
-                                    className="h-9 w-9 hover:bg-amber-50 hover:border-amber-300"
+                                    className="h-8 w-8 hover:bg-amber-50 hover:border-amber-300"
                                   >
                                     <Plus className="h-3 w-3" />
                                   </Button>
                                 </div>
                                 <div className="text-right">
-                                  <span className="font-bold text-xl text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                                  <span className="font-bold text-xl text-transparent bg-clip-text bg-linear-to-br from-amber-600 to-orange-600">
                                     {formatCurrency(item.subtotal)}
                                   </span>
                                 </div>
                               </div>
                             </div>
-                        ))}
-                        </div>
+                          ))}
+                          </div>
                       </ScrollArea>
                     )}
 
                     {/* Order Summary */}
                     {cart.length > 0 && (
                       <>
-                        <div className="mt-4 space-y-3 border-t-2 border-amber-200 pt-4 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4">
+                        <div className="mt-4 space-y-3 border-t-2 border-amber-200 pt-4 bg-linear-to-br from-amber-50 to-orange-50 rounded-xl p-4">
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Subtotal</span>
                             <span className="font-semibold">{formatCurrency(subtotal)}</span>
@@ -1166,17 +1086,17 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                           <Separator />
                           <div className="flex justify-between text-xl font-bold">
                             <span>Total</span>
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">
+                            <span className="text-transparent bg-clip-text bg-linear-to-br from-amber-600 to-orange-600">
                               {formatCurrency(total)}
                             </span>
                           </div>
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex gap-2 mt-4">
+                        <div className="flex gap-[2px] mt-4">
                           <Button
                             onClick={handleCancelOrder}
-                            className="flex-1 h-11 bg-gray-100 hover:bg-gray-200 text-gray-700"
+                            className="flex-1  text-[12px] h-6 bg-gray-100 hover:bg-gray-200 text-gray-700"
                             disabled={cart.length === 0}
                             >
                               <RotateCcw className="h-4 w-4 mr-2" />
@@ -1184,7 +1104,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                             </Button>
                           <Button
                             onClick={handleHoldOrder}
-                            className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg"
+                            className="flex-1  text-[12px] h-6 bg-linear-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg"
                             disabled={cart.length === 0}
                             >
                               <Clock className="h-4 w-4 mr-2" />
@@ -1192,7 +1112,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                             </Button>
                             <Button
                               onClick={() => setHeldOrdersOpen(true)}
-                              className="flex-1 h-11 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
+                              className="flex-1  text-[12px] h-6 bg-linear-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
                               disabled={cart.length === 0}
                             >
                               <Clock className="h-4 w-4 mr-2" />
@@ -1200,7 +1120,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                             </Button>
                             <Button
                               onClick={() => setCheckoutOpen(true)}
-                              className="flex-1 h-14 text-base font-semibold bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-xl"
+                              className="flex-1  text-[12px] h-6  bg-linear-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-xl"
                               disabled={cart.length === 0}
                             >
                               <ShoppingCart className="h-5 w-5 mr-2" />
@@ -1218,7 +1138,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           {/* Orders Tab */}
           <TabsContent value="orders">
             <Card className="shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+              <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white">
                 <div className="flex items-center gap-2">
                   <Receipt className="h-6 w-6" />
                   Order History
@@ -1230,7 +1150,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
               <CardContent className="p-6">
                 <div className="rounded-lg border border-amber-200 overflow-hidden">
                   <Table>
-                    <TableHeader className="bg-gradient-to-r from-amber-50 to-orange-50">
+                    <TableHeader className="bg-linear-to-br from-amber-50 to-orange-50">
                       <TableRow>
                         <TableHead className="font-semibold">Order #</TableHead>
                         <TableHead className="font-semibold">Date</TableHead>
@@ -1342,7 +1262,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                  <h2 className="text-2xl font-bold bg-linear-to-br from-purple-600 to-purple-800 bg-clip-text text-transparent">
                     AI-Powered Business Insights
                   </h2>
                   <p className="text-gray-600 mt-1">Smart analytics and recommendations for your coffee shop</p>
@@ -1352,7 +1272,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                     onClick={() => fetchAIInsights(7)}
                     variant={aiInsights?.period === '7 days' ? 'default' : 'outline'}
                     className={aiInsights?.period === '7 days'
-                      ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
+                      ? 'bg-linear-to-br from-purple-500 to-purple-600 text-white'
                       : ''
                     }
                   >
@@ -1362,7 +1282,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                     onClick={() => fetchAIInsights(30)}
                     variant={aiInsights?.period === '30 days' ? 'default' : 'outline'}
                     className={aiInsights?.period === '30 days'
-                      ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
+                      ? 'bg-linear-to-br from-purple-500 to-purple-600 text-white'
                       : ''
                     }
                   >
@@ -1372,7 +1292,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                     onClick={() => fetchAIInsights(90)}
                     variant={aiInsights?.period === '90 days' ? 'default' : 'outline'}
                     className={aiInsights?.period === '90 days'
-                      ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white'
+                      ? 'bg-linear-to-br from-purple-500 to-purple-600 text-white'
                       : ''
                     }
                   >
@@ -1393,25 +1313,25 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                 <>
                   {/* Summary Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                    <Card className="border-0 shadow-lg bg-linear-to-br from-purple-500 to-purple-600 text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-purple-100 text-sm">Total Revenue</CardDescription>
                         <CardTitle className="text-3xl font-bold">{formatCurrency(aiInsights.summary.totalRevenue)}</CardTitle>
                       </CardHeader>
                     </Card>
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                    <Card className="border-0 shadow-lg bg-linear-to-br from-blue-500 to-blue-600 text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-blue-100 text-sm">Total Orders</CardDescription>
                         <CardTitle className="text-3xl font-bold">{aiInsights.summary.totalOrders}</CardTitle>
                       </CardHeader>
                     </Card>
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
+                    <Card className="border-0 shadow-lg bg-linear-to-br from-green-500 to-green-600 text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-green-100 text-sm">Avg Order Value</CardDescription>
                         <CardTitle className="text-3xl font-bold">₹{aiInsights.summary.averageOrderValue}</CardTitle>
                       </CardHeader>
                     </Card>
-                    <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white">
+                    <Card className="border-0 shadow-lg bg-linear-to-br from-amber-500 to-orange-600 text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-amber-100 text-sm">Analysis Period</CardDescription>
                         <CardTitle className="text-2xl font-bold">{aiInsights.period}</CardTitle>
@@ -1423,9 +1343,9 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {aiInsights.insights.map((insight: any, index: number) => (
                       <Card key={index} className={`border-0 shadow-lg ${
-                        insight.type === 'positive' ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-l-4 border-green-500' :
-                        insight.type === 'warning' ? 'bg-gradient-to-br from-red-50 to-orange-50 border-l-4 border-red-500' :
-                        'bg-gradient-to-br from-blue-50 to-purple-50 border-l-4 border-blue-500'
+                        insight.type === 'positive' ? 'bg-linear-to-br from-green-50 to-emerald-50 border-l-4 border-green-500' :
+                        insight.type === 'warning' ? 'bg-linear-to-br from-red-50 to-orange-50 border-l-4 border-red-500' :
+                        'bg-linear-to-br from-blue-50 to-purple-50 border-l-4 border-blue-500'
                       }`}>
                         <CardHeader>
                           <CardTitle className={`text-lg flex items-center gap-2 ${
@@ -1450,7 +1370,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
 
                   {/* Top Items */}
                   <Card className="border-0 shadow-lg">
-                    <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                    <CardHeader className="bg-linear-to-br from-purple-500 to-purple-600 text-white">
                       <CardTitle className="flex items-center gap-2">
                         <PieChart className="h-5 w-5" />
                         Top Selling Items
@@ -1459,7 +1379,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                     <CardContent className="p-6">
                       <div className="space-y-4">
                         {aiInsights.topItems.map((item: any, index: number) => (
-                          <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-purple-50 rounded-lg">
+                          <div key={index} className="flex items-center justify-between p-4 bg-linear-to-br from-gray-50 to-purple-50 rounded-lg">
                             <div className="flex items-center gap-4">
                               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white ${
                                 index === 0 ? 'bg-amber-500' :
@@ -1500,7 +1420,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           <TabsContent value="reports">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-br from-green-500 to-green-600 text-white p-4">
+                <CardHeader className="bg-linear-to-br from-green-500 to-green-600 text-white p-4">
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-6 w-6" />
                     Today's Revenue
@@ -1543,7 +1463,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
               </Card>
 
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4">
+                <CardHeader className="bg-linear-to-br from-purple-500 to-purple-600 text-white p-4">
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-6 w-6" />
                     Total Revenue
@@ -1579,7 +1499,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
               </Card>
 
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4">
+                <CardHeader className="bg-linear-to-br from-blue-500 to-blue-600 text-white p-4">
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-6 w-6" />
                     Average Order Value
@@ -1608,7 +1528,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
               </Card>
 
               <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-gradient-to-br from-amber-500 to-orange-600 text-white p-4">
+                <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white p-4">
                   <CardTitle className="flex items-center gap-2">
                     <Package className="h-6 w-6" />
                     Inventory Status
@@ -1631,7 +1551,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           {/* Inventory Tab - Manager/Admin only */}
           <TabsContent value="inventory">
             <Card className="shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+              <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white">
                 <CardTitle className="flex items-center gap-2">
                   <Package className="h-6 w-6" />
                   Inventory Management
@@ -1653,7 +1573,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           {/* Menu Tab - Manager/Admin only */}
           <TabsContent value="menu">
             <Card className="shadow-xl">
-              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+              <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white">
                 <CardTitle className="flex items-center gap-2">
                   <Utensils className="h-6 w-6" />
                   Menu Management
@@ -1677,7 +1597,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Staff Management */}
               <Card className="shadow-xl">
-                <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                <CardHeader className="bg-linear-to-br from-purple-500 to-purple-600 text-white">
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-6 w-6" />
                     Staff Management
@@ -1697,7 +1617,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
 
               {/* Data Import/Export */}
               <Card className="shadow-xl">
-                <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+                <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white">
                   <CardTitle className="flex items-center gap-2">
                     <Download className="h-6 w-6" />
                     Data Import & Export
@@ -1716,7 +1636,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                     <div className="space-y-2">
                       <Button
                         onClick={() => window.open('/api/export?type=all', '_blank')}
-                        className="w-full justify-start bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                        className="w-full justify-start bg-linear-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
                       >
                         <Download className="h-4 w-4 mr-2" />
                         Export All Data (Users, Products, Categories, Orders)
@@ -1818,7 +1738,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           {posConfig?.features.tableManagement && (
             <TabsContent value="tables">
               <Card className="shadow-xl">
-                <CardHeader className="bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+                <CardHeader className="bg-linear-to-br from-teal-500 to-teal-600 text-white">
                   <CardTitle className="flex items-center gap-2">
                     <LayoutGrid className="h-6 w-6" />
                     Table Management
@@ -1832,7 +1752,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
                       <Card key={num} className="cursor-pointer hover:shadow-lg transition-all border-2 border-teal-200 hover:border-teal-500">
                         <CardContent className="p-4 text-center">
-                          <div className="bg-gradient-to-br from-teal-100 to-teal-200 rounded-lg p-4 mb-2">
+                          <div className="bg-linear-to-br from-teal-100 to-teal-200 rounded-lg p-4 mb-2">
                             <LayoutGrid className="h-8 w-8 mx-auto text-teal-600" />
                           </div>
                           <h4 className="font-semibold">Table {num}</h4>
@@ -1856,7 +1776,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           {posConfig?.features.kitchenDisplay && (
             <TabsContent value="kds">
               <Card className="shadow-xl">
-                <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+                <CardHeader className="bg-linear-to-br from-orange-500 to-orange-600 text-white">
                   <CardTitle className="flex items-center gap-2">
                     <Armchair className="h-6 w-6" />
                     Kitchen Display System
@@ -1868,7 +1788,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[1, 2, 3].map((order) => (
-                      <Card key={order} className="border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50">
+                      <Card key={order} className="border-2 border-orange-200 bg-linear-to-br from-orange-50 to-yellow-50">
                         <CardHeader className="pb-3">
                           <div className="flex items-center justify-between">
                             <Badge className="bg-orange-500 text-white">Table {order}</Badge>
@@ -1886,7 +1806,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                               <Badge className="bg-yellow-400 text-yellow-900">Preparing</Badge>
                             </div>
                           </div>
-                          <Button className="w-full mt-4 bg-gradient-to-r from-green-500 to-green-600">
+                          <Button className="w-full mt-4 bg-linear-to-br from-green-500 to-green-600">
                             Mark as Ready
                           </Button>
                         </CardContent>
@@ -1902,7 +1822,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           {posConfig?.features.returns && (
             <TabsContent value="returns">
               <Card className="shadow-xl">
-                <CardHeader className="bg-gradient-to-r from-red-500 to-red-600 text-white">
+                <CardHeader className="bg-linear-to-br from-red-500 to-red-600 text-white">
                   <CardTitle className="flex items-center gap-2">
                     <RotateCw className="h-6 w-6" />
                     Returns & Exchanges
@@ -1917,7 +1837,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                       <h4 className="font-semibold text-red-800 mb-2">Recent Returns</h4>
                       <p className="text-sm text-gray-600">No returns in progress</p>
                     </div>
-                    <Button className="w-full bg-gradient-to-r from-red-500 to-red-600">
+                    <Button className="w-full bg-linear-to-br from-red-500 to-red-600">
                       <Plus className="h-4 w-4 mr-2" />
                       New Return Request
                     </Button>
@@ -1931,9 +1851,9 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           {posConfig?.features.giftCards && (
             <TabsContent value="giftcards">
               <Card className="shadow-xl">
-                <CardHeader className="bg-gradient-to-r from-pink-500 to-pink-600 text-white">
+                <CardHeader className="bg-linear-to-br from-pink-500 to-pink-600 text-white">
                   <CardTitle className="flex items-center gap-2">
-                    <Card className="h-6 w-6" />
+                    {/* <Card className="h-6 w-6" /> */}
                     Gift Cards
                   </CardTitle>
                   <CardDescription className="text-pink-100">
@@ -1950,7 +1870,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                         value={giftCardLookup}
                         onChange={(e) => setGiftCardLookup(e.target.value)}
                       />
-                      <Button className="bg-gradient-to-r from-pink-500 to-pink-600">
+                      <Button className="bg-linear-to-br from-pink-500 to-pink-600">
                         Check
                       </Button>
                     </div>
@@ -1965,7 +1885,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                       <Input type="number" placeholder="Initial Balance (₹)" />
                       <Input type="date" placeholder="Expiry Date" />
                     </div>
-                    <Button className="w-full mt-4 bg-gradient-to-r from-pink-500 to-pink-600">
+                    <Button className="w-full mt-4 bg-linear-to-br from-pink-500 to-pink-600">
                       <Plus className="h-4 w-4 mr-2" />
                       Issue Gift Card
                     </Button>
@@ -1979,7 +1899,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           {posConfig?.features.cashDrawer && (
             <TabsContent value="cashdrawer">
               <Card className="shadow-xl">
-                <CardHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white">
+                <CardHeader className="bg-linear-to-br from-green-500 to-green-600 text-white">
                   <CardTitle className="flex items-center gap-2">
                     <Wallet className="h-6 w-6" />
                     Cash Drawer
@@ -2010,11 +1930,11 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                     </Card>
                   </div>
                   <div className="mt-6 flex gap-2">
-                    <Button className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600">
+                    <Button className="flex-1 bg-linear-to-br from-blue-500 to-blue-600">
                       <Plus className="h-4 w-4 mr-2" />
                       Cash In
                     </Button>
-                    <Button className="flex-1 bg-gradient-to-r from-red-500 to-red-600">
+                    <Button className="flex-1 bg-linear-to-br from-red-500 to-red-600">
                       <Minus className="h-4 w-4 mr-2" />
                       Cash Out
                     </Button>
@@ -2028,7 +1948,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           {posConfig?.features.barcodes && (
             <TabsContent value="barcode">
               <Card className="shadow-xl">
-                <CardHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                <CardHeader className="bg-linear-to-br from-blue-500 to-blue-600 text-white">
                   <CardTitle className="flex items-center gap-2">
                     <ScanBarcode className="h-6 w-6" />
                     Barcode Scanner
@@ -2055,7 +1975,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                               <h4 className="font-semibold text-lg">{barcodeProduct.name}</h4>
                               <p className="text-sm text-gray-600">Price: ₹{barcodeProduct.price?.toFixed(2)}</p>
                             </div>
-                            <Button className="bg-gradient-to-r from-green-500 to-green-600">
+                            <Button className="bg-linear-to-br from-green-500 to-green-600">
                               <Plus className="h-4 w-4 mr-2" />
                               Add to Cart
                             </Button>
@@ -2078,7 +1998,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
           {posConfig?.features.sizeVariants && (
             <TabsContent value="variants">
               <Card className="shadow-xl">
-                <CardHeader className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white">
+                <CardHeader className="bg-linear-to-br from-indigo-500 to-indigo-600 text-white">
                   <CardTitle className="flex items-center gap-2">
                     <Tag className="h-6 w-6" />
                     Product Variants
@@ -2092,7 +2012,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                     <Tag className="h-16 w-16 mx-auto mb-4 opacity-20" />
                     <p className="font-medium text-lg">Product variants management</p>
                     <p className="text-sm mt-2">Create and manage size/color variants for your products</p>
-                    <Button className="mt-4 bg-gradient-to-r from-indigo-500 to-indigo-600">
+                    <Button className="mt-4 bg-linear-to-br from-indigo-500 to-indigo-600">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Variant
                     </Button>
@@ -2107,7 +2027,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
       {/* Held Orders Dialog */}
       <Dialog open={heldOrdersOpen} onOpenChange={setHeldOrdersOpen}>
         <DialogContent className="max-w-4xl border-0 shadow-2xl max-h-[85vh]">
-          <DialogHeader className="bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-linear-to-br from-amber-500 to-amber-600 text-white rounded-t-lg p-6 -m-6 mb-6">
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle className="text-2xl font-bold flex items-center gap-2">
@@ -2140,7 +2060,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
               <div className="space-y-4">
                 {heldOrders.map((order) => (
                   <Card key={order.id} className="border-2 border-amber-200 hover:border-amber-400 transition-all hover:shadow-lg">
-                    <CardHeader className="bg-gradient-to-br from-amber-50 to-amber-100 p-4">
+                    <CardHeader className="bg-linear-to-br from-amber-50 to-amber-100 p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
@@ -2195,7 +2115,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                                 <span className="font-medium">{item.menuItem.name}</span>
                                 <div className="flex items-center gap-2 text-xs text-gray-500">
                                   <span>Qty: {item.quantity}</span>
-                                  <span>x ₹{item.price.toFixed(2)}</span>
+                                  <span>x ₹{item.menuItem.price.toFixed(2)}</span>
                                 </div>
                               </div>
                               <span className="font-bold">₹{item.subtotal.toFixed(2)}</span>
@@ -2244,7 +2164,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
       {/* Receipt Dialog */}
       <Dialog open={receiptDialogOpen} onOpenChange={setReceiptDialogOpen}>
         <DialogContent className="max-w-md border-0 shadow-2xl">
-          <DialogHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Receipt className="h-5 w-5" />
               Order Receipt
@@ -2291,7 +2211,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                 </Button>
                 <Button
                   onClick={handlePrintReceipt}
-                  className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                  className="flex-1 bg-linear-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
                 >
                   <Printer className="h-4 w-4 mr-2" />
                   Print Receipt
@@ -2305,7 +2225,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
       {/* WhatsApp Receipt Dialog */}
       <Dialog open={sendWhatsAppDialogOpen} onOpenChange={setSendWhatsAppDialogOpen}>
         <DialogContent className="max-w-md border-0 shadow-2xl">
-          <DialogHeader className="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-linear-to-br from-green-500 to-green-600 text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <MessageSquare className="h-5 w-5" />
               Send via WhatsApp
@@ -2346,7 +2266,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
               </Button>
               <Button
                 onClick={handleSendWhatsApp}
-                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                className="flex-1 bg-linear-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
               >
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Send via WhatsApp
@@ -2359,7 +2279,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
       {/* Email Receipt Dialog */}
       <Dialog open={sendEmailDialogOpen} onOpenChange={setSendEmailDialogOpen}>
         <DialogContent className="max-w-md border-0 shadow-2xl">
-          <DialogHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-linear-to-br from-blue-500 to-blue-600 text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Mail className="h-5 w-5" />
               Send via Email
@@ -2399,7 +2319,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
               </Button>
               <Button
                 onClick={handleSendEmail}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                className="flex-1 bg-linear-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
               >
                 <Mail className="h-4 w-4 mr-2" />
                 Send Email
@@ -2412,7 +2332,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
       {/* Profile Dialog */}
       <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
         <DialogContent className="max-w-md border-0 shadow-2xl">
-          <DialogHeader className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-linear-to-br from-blue-500 to-blue-600 text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
               <User className="h-6 w-6" />
               My Profile
@@ -2466,7 +2386,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
                   setProfileDialogOpen(false)
                   setPasswordDialogOpen(true)
                 }}
-                className="flex-1 h-11 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                className="flex-1 h-11 bg-linear-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
               >
                 <Key className="h-4 w-4 mr-2" />
                 Change Password
@@ -2474,7 +2394,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
               <Button
                 onClick={handleUpdateProfile}
                 disabled={profileLoading}
-                className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                className="flex-1 h-11 bg-linear-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
               >
                 {profileLoading ? 'Saving...' : 'Save Profile'}
               </Button>
@@ -2486,7 +2406,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
       {/* Password Change Dialog */}
       <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
         <DialogContent className="max-w-md border-0 shadow-2xl">
-          <DialogHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-linear-to-br from-purple-500 to-purple-600 text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
               <Key className="h-6 w-6" />
               Change Password
@@ -2556,7 +2476,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
               <Button
                 onClick={handleChangePassword}
                 disabled={passwordLoading}
-                className="flex-1 h-11 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                className="flex-1 h-11 bg-linear-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
               >
                 {passwordLoading ? 'Changing...' : 'Change Password'}
               </Button>
@@ -2570,7 +2490,7 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-lg">
+              <div className="bg-linear-to-br from-amber-500 to-orange-600 p-2 rounded-lg">
                 <Coffee className="h-4 w-4 text-white" />
               </div>
               <div>
@@ -2592,15 +2512,17 @@ export function POSDashboard({ user, onLogout }: DashboardProps) {
 }
 
 export default function Page() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [loginData, setLoginData] = useState({ email: '', password: '' })
-  const [loginError, setLoginError] = useState('')
-  const [loginTab, setLoginTab] = useState<'email' | 'sms'>('email')
-  const [smsLoginData, setSmsLoginData] = useState({ phone: '', otp: '' })
-  const [otpSent, setOtpSent] = useState(false)
-  const [otpLoading, setOtpLoading] = useState(false)
-  const [smsLoginError, setSmsLoginError] = useState('')
+  const {
+    user, setUser,
+    loading, setLoading,
+    loginData, setLoginData,
+    loginError, setLoginError,
+    loginTab, setLoginTab,
+    smsLoginData, setSmsLoginData,
+    otpSent, setOtpSent,
+    otpLoading, setOtpLoading,
+    smsLoginError, setSmsLoginError
+  } = useAuthStore()
 
   useEffect(() => {
     // Check for existing user session
@@ -2650,6 +2572,8 @@ export default function Page() {
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
+      // Clear persisted auth state from localStorage
+      localStorage.removeItem('auth-storage')
       setUser(null)
       toast.success('Logged out successfully')
     } catch (error) {
@@ -2660,7 +2584,7 @@ export default function Page() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-orange-50 via-amber-50 to-yellow-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600"></div>
       </div>
     )
@@ -2733,9 +2657,9 @@ export default function Page() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 p-4">
-        <Card className="w-full max-w-md shadow-2xl border-2 border-amber-200">
-          <CardHeader className="bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-t-lg p-8">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-orange-50 via-amber-50 to-yellow-50 p-4">
+        <Card className="w-full max-w-md shadow-2xl border-2 border-amber-200 py-0">
+          <CardHeader className="bg-linear-to-br from-amber-600 to-orange-600 text-white rounded-t-lg p-8">
             <div className="flex flex-col items-center gap-4">
               <div className="bg-white/20 p-4 rounded-full">
                 <Coffee className="h-12 w-12" />
@@ -2798,7 +2722,7 @@ export default function Page() {
                   )}
                   <Button
                     type="submit"
-                    className="w-full h-11 text-base font-semibold bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
+                    className="w-full h-11 text-base font-semibold bg-linear-to-br from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
                   >
                     Sign In
                   </Button>
@@ -2835,7 +2759,7 @@ export default function Page() {
                         type="button"
                         onClick={handleSendOTP}
                         disabled={otpLoading || !smsLoginData.phone}
-                        className="w-full h-11 text-base font-semibold bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
+                        className="w-full h-11 text-base font-semibold bg-linear-to-br from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
                       >
                         {otpLoading ? 'Sending...' : 'Send OTP'}
                       </Button>
@@ -2869,7 +2793,7 @@ export default function Page() {
                       <Button
                         type="submit"
                         disabled={!smsLoginData.otp || smsLoginData.otp.length !== 6}
-                        className="w-full h-11 text-base font-semibold bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
+                        className="w-full h-11 text-base font-semibold bg-linear-to-br from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 shadow-lg"
                       >
                         Verify & Login
                       </Button>
@@ -2918,5 +2842,5 @@ export default function Page() {
     )
   }
 
-  return <POSDashboard user={user} onLogout={handleLogout} />
+  return <POSDashboard user={user} setUser={setUser} onLogout={handleLogout} />
 }

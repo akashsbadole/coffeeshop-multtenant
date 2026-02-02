@@ -15,26 +15,48 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
+  title: "POS Code Scaffold - Retail, Coffee & Garment POS Web Applications",
+  description:
+    "A Building POS web applications including Retail POS, Coffee POS, Garment POS, and other business management systems. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
+  keywords: [
+    "POS",
+    "Point of Sale System",
+    "Retail POS",
+    "Coffee POS",
+    "Restaurant POS",
+    "Garment POS",
+    "Clothing Store POS",
+    "Next.js POS",
+    "POS Web Application",
+    "Inventory Management System",
+    "Billing Software",
+    "Sales Management",
+    "Business Management Software",
+    "React POS",
+    "TypeScript POS",
+    "Tailwind CSS",
+    "shadcn/ui",
+  ],
+  authors: [{ name: "POS Development Team" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "https://your-pos-app.com/demo.svg",
   },
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "POS Code Scaffold for Retail, Coffee & Garment Businesses",
+    description:
+      "Build modern Retail POS, Coffee POS, Garment POS, and inventory-driven business web applications using Next.js.",
+    url: "https://your-pos-app.com",
+    siteName: "POS Scaffold",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "POS Web Application Scaffold",
+    description:
+      "Modern scaffold for Retail POS, Coffee POS, Garment POS, and business management web applications.",
   },
 };
+
 
 export default function RootLayout({
   children,

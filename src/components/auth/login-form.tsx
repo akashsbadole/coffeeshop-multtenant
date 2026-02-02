@@ -59,8 +59,8 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         </div>
 
         {/* Login Card */}
-        <Card className="shadow-2xl border-0 backdrop-blur-sm bg-white/90">
-          <CardHeader className="space-y-1 text-center pb-4">
+        <Card className="shadow-2xl border-0 backdrop-blur-sm bg-white/90 p-1!">
+          <CardHeader className="space-y-1 text-center ">
             <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
             <CardDescription>
               Sign in to access your dashboard
