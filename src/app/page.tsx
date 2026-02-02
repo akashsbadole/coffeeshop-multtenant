@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Separator } from '@/components/ui/separator'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from 'sonner'
+import { MenuManagement } from '@/components/admin/menu-management'
+import { InventoryManagement } from '@/components/admin/inventory-management'
 import {
   ShoppingCart,
   Search,
@@ -75,6 +77,8 @@ import {
   useProfileStore,
   useAIInsightsStore
 } from '@/store'
+
+import { selectSubtotal, selectTotalGst, selectTotal } from '@/store/cart'
 
 interface DashboardProps {
   user: any
@@ -194,8 +198,10 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
     passwordLoading, setPasswordLoading
   } = useProfileStore()
 
-  // Cart Store computed values
-  const { subtotal, totalGst, total } = useCartStore()
+  // Cart Store computed values (using selector functions)
+  const subtotal = useCartStore(selectSubtotal)
+  const totalGst = useCartStore(selectTotalGst)
+  const total = useCartStore(selectTotal)
 
   // Fetch menu items, categories, and orders
   useEffect(() => {
@@ -891,13 +897,13 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               {/* Menu Section */}
               <div className="lg:col-span-2 flex flex-col gap-4">
                 {/* Category Filter */}
-                <div className="flex gap-2 overflow-x-auto pb-2">
+                <div className="flex gap-2 overflow-x-auto py-2">
                   <Button
                     key="all"
                     variant={selectedCategory === 'all' ? 'default' : 'outline'}
                     onClick={() => setSelectedCategory('all')}
-                    className={selectedCategory === 'all' 
-                      ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white shadow-lg' 
+                    className={selectedCategory === 'all'
+                      ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white shadow-lg p-4' 
                       : 'bg-white hover:bg-amber-50 border-amber-200'
                     }
                   >
@@ -911,7 +917,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                       className={`shrink-0 flex items-center gap-2 ${
                         selectedCategory === category.id
                           ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white shadow-lg'
-                          : 'bg-white hover:bg-amber-50 border-amber-200'
+                          : 'bg-white hover:bg-amber-50 border-amber-200 p-4'
                       }`}
                     >
                       {getCategoryIcon(category.name)}
@@ -934,11 +940,11 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
                 {/* Menu Items Grid */}
                 <ScrollArea className="flex-1 pr-4 h-full overflow-y-auto">
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 overflow-y-auto">
                     {filteredItems.map((item) => (
                       <Card
                         key={item.id}
-                        className="cursor-pointer hover:shadow-2xl transition-all hover:scale-105 border-2 border-transparent hover:border-amber-400 group overflow-hidden bg-white"
+                        className="cursor-pointer hover:shadow-2xl transition-all hover:scale-105 border-2 border-transparent hover:border-amber-400 group overflow-hidden bg-white p-2"
                         onClick={() => addToCart(item)}
                       >
                         <CardHeader className="p-4 pb-2 bg-linear-to-br from-amber-50 to-orange-50 group-hover:from-amber-100 group-hover:to-orange-100 transition-colors">
@@ -957,13 +963,13 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                               <span className="text-xl font-bold text-transparent bg-clip-text bg-linear-to-br from-amber-600 to-orange-600">
                                 ₹{item.price.toFixed(2)}
                               </span>
-                              <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-200">
+                              <Badge variant="secondary" className="text-[10px] bg-amber-100 text-amber-700 border-amber-200">
                                 GST {item.gstRate}%
                               </Badge>
                             </div>
                             </div>
-                            <div className="bg-linear-to-br from-amber-500 to-orange-600 p-2 rounded-lg shadow-lg group-hover:shadow-xl transition-all">
-                              <Plus className="h-5 w-5 text-white" />
+                            <div className="bg-linear-to-br from-amber-500 to-orange-600 p-2 rounded-lg shadow-lg group-hover:shadow-xl transition-all mt-1">
+                              <Plus className="h-5 w-5 text-white text-center" />
                             </div>
                           </CardContent>
                         </Card>
@@ -982,7 +988,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
               {/* Cart Section */}
               <div className="flex flex-col gap-4">
-                <Card className="flex-1 flex flex-col shadow-xl border-0 overflow-hidden">
+                <Card className="flex-1 flex flex-col shadow-xl border-0 overflow-hidden p-0">
                   <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white p-4">
                     <CardTitle className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1001,7 +1007,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                     {cart.length === 0 ? (
                       <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
                         <div className="bg-linear-to-br from-amber-100 to-orange-100 p-6 rounded-full mb-4">
-                          <ShoppingCart className="h-12 w-12 text-amber-400" />
+                          <ShoppingCart className="h-6 w-6 text-amber-400" />
                         </div>
                         <p className="font-medium">Your cart is empty</p>
                         <p className="text-sm">Add delicious items from menu</p>
@@ -1316,25 +1322,25 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                     <Card className="border-0 shadow-lg bg-linear-to-br from-purple-500 to-purple-600 text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-purple-100 text-sm">Total Revenue</CardDescription>
-                        <CardTitle className="text-3xl font-bold">{formatCurrency(aiInsights.summary.totalRevenue)}</CardTitle>
+                        <CardTitle className="text-2xl font-bold text-center">{formatCurrency(aiInsights.summary.totalRevenue)}</CardTitle>
                       </CardHeader>
                     </Card>
                     <Card className="border-0 shadow-lg bg-linear-to-br from-blue-500 to-blue-600 text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-blue-100 text-sm">Total Orders</CardDescription>
-                        <CardTitle className="text-3xl font-bold">{aiInsights.summary.totalOrders}</CardTitle>
+                        <CardTitle className="text-2xl font-bold text-center">{aiInsights.summary.totalOrders}</CardTitle>
                       </CardHeader>
                     </Card>
                     <Card className="border-0 shadow-lg bg-linear-to-br from-green-500 to-green-600 text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-green-100 text-sm">Avg Order Value</CardDescription>
-                        <CardTitle className="text-3xl font-bold">₹{aiInsights.summary.averageOrderValue}</CardTitle>
+                        <CardTitle className="text-2xl font-bold text-center">₹{aiInsights.summary.averageOrderValue}</CardTitle>
                       </CardHeader>
                     </Card>
                     <Card className="border-0 shadow-lg bg-linear-to-br from-amber-500 to-orange-600 text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-amber-100 text-sm">Analysis Period</CardDescription>
-                        <CardTitle className="text-2xl font-bold">{aiInsights.period}</CardTitle>
+                        <CardTitle className="text-2xl font-bold text-center">{aiInsights.period}</CardTitle>
                       </CardHeader>
                     </Card>
                   </div>
@@ -1361,7 +1367,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                           <p className="text-gray-700 mb-3">{insight.message}</p>
                           <div className="bg-white/80 p-3 rounded-lg border">
                             <p className="text-sm font-semibold text-gray-800 mb-1">💡 Recommendation:</p>
-                            <p className="text-sm text-gray-600">{insight.recommendation}</p>
+                            <p className="text-[12px] text-gray-600 text-center">{insight.recommendation}</p>
                           </div>
                         </CardContent>
                       </Card>
@@ -1433,29 +1439,29 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   <div className="flex items-center gap-6 py-6">
                     <div className="flex-1 flex flex-col items-center">
                       <div className="bg-green-100 p-4 rounded-xl">
-                        <IndianRupee className="h-12 w-12 text-green-600" />
+                        <IndianRupee className="h-6 w-6 text-green-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Today's Revenue</p>
-                        <p className="text-3xl font-bold">₹{todayRevenue.toFixed(0)}</p>
+                        <p className="text-[12px] text-gray-600 text-center">Today's Revenue</p>
+                        <p className="text-2xl font-bold text-center">₹{todayRevenue.toFixed(0)}</p>
                       </div>
                     </div>
                     <div className="flex-1 flex flex-col items-center">
                       <div className="bg-green-100 p-4 rounded-xl">
-                        <Receipt className="h-12 w-12 text-green-600" />
+                        <Receipt className="h-6 w-6 text-green-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Today's Orders</p>
-                        <p className="text-3xl font-bold">{todayOrders.length}</p>
+                        <p className="text-[12px] text-gray-600 text-center">Today's Orders</p>
+                        <p className="text-2xl font-bold text-center">{todayOrders.length}</p>
                       </div>
                     </div>
                     <div className="flex-1 flex flex-col items-center">
                       <div className="bg-green-100 p-4 rounded-xl">
-                        <BarChart3 className="h-12 w-12 text-green-600" />
+                        <BarChart3 className="h-6 w-6 text-green-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Total Orders</p>
-                        <p className="text-3xl font-bold">{totalOrdersCount}</p>
+                        <p className="text-[12px] text-gray-600 text-center">Total Orders</p>
+                        <p className="text-2xl font-bold text-center">{totalOrdersCount}</p>
                       </div>
                     </div>
                   </div>
@@ -1476,22 +1482,22 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   <div className="flex items-center gap-6 py-6">
                     <div className="flex-1 flex flex-col items-center">
                       <div className="bg-purple-100 p-4 rounded-xl">
-                        <TrendingUp className="h-12 w-12 text-purple-600" />
+                        <TrendingUp className="h-6 w-6 text-purple-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Total Revenue</p>
-                        <p className="text-3xl font-bold">
+                        <p className="text-[12px] text-gray-600 text-center">Total Revenue</p>
+                        <p className="text-2xl font-bold text-center">
                           ₹{orders.reduce((sum, order) => sum + order.totalAmount, 0).toFixed(0)}
                         </p>
                       </div>
                     </div>
                     <div className="flex-1 flex flex-col items-center">
                       <div className="bg-purple-100 p-4 rounded-xl">
-                        <Receipt className="h-12 w-12 text-purple-600" />
+                        <Receipt className="h-6 w-6 text-purple-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Total Orders</p>
-                        <p className="text-3xl font-bold">{totalOrdersCount}</p>
+                        <p className="text-[12px] text-gray-600 text-center">Total Orders</p>
+                        <p className="text-2xl font-bold text-center">{totalOrdersCount}</p>
                       </div>
                     </div>
                   </div>
@@ -1512,11 +1518,11 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   <div className="flex items-center gap-6 py-6">
                     <div className="flex-1 flex flex-col items-center">
                       <div className="bg-blue-100 p-4 rounded-xl">
-                        <IndianRupee className="h-12 w-12 text-blue-600" />
+                        <IndianRupee className="h-6 w-6 text-blue-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-600">Avg Order Value</p>
-                        <p className="text-3xl font-bold">
+                        <p className="text-[12px] text-gray-600 text-center">Avg Order Value</p>
+                        <p className="text-2xl font-bold text-center">
                           {totalOrdersCount > 0
                             ? `₹${(orders.reduce((sum, order) => sum + order.totalAmount, 0) / totalOrdersCount).toFixed(2)}`
                             : '₹0'}
@@ -1550,46 +1556,12 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
           {/* Inventory Tab - Manager/Admin only */}
           <TabsContent value="inventory">
-            <Card className="shadow-xl">
-              <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white">
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-6 w-6" />
-                  Inventory Management
-                </CardTitle>
-                <CardDescription className="text-amber-100">
-                  Track stock levels and manage inventory
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="text-center py-12 text-gray-500">
-                  <Package className="h-20 w-20 mx-auto mb-4 opacity-20" />
-                  <p className="font-medium text-lg">Inventory features coming soon</p>
-                  <p className="text-sm mt-2">Stock tracking will be available in the next update</p>
-                </div>
-              </CardContent>
-            </Card>
+            <InventoryManagement />
           </TabsContent>
 
           {/* Menu Tab - Manager/Admin only */}
           <TabsContent value="menu">
-            <Card className="shadow-xl">
-              <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white">
-                <CardTitle className="flex items-center gap-2">
-                  <Utensils className="h-6 w-6" />
-                  Menu Management
-                </CardTitle>
-                <CardDescription className="text-amber-100">
-                  Add, edit, or remove menu items
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="text-center py-12 text-gray-500">
-                  <Utensils className="h-20 w-20 mx-auto mb-4 opacity-20" />
-                  <p className="font-medium text-lg">Menu features coming soon</p>
-                  <p className="text-sm mt-2">Menu management will be available in the next update</p>
-                </div>
-              </CardContent>
-            </Card>
+            <MenuManagement />
           </TabsContent>
 
           {/* Settings Tab - Admin only */}
@@ -1835,7 +1807,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   <div className="space-y-4">
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                       <h4 className="font-semibold text-red-800 mb-2">Recent Returns</h4>
-                      <p className="text-sm text-gray-600">No returns in progress</p>
+                      <p className="text-[12px] text-gray-600 text-center">No returns in progress</p>
                     </div>
                     <Button className="w-full bg-linear-to-br from-red-500 to-red-600">
                       <Plus className="h-4 w-4 mr-2" />
@@ -1912,19 +1884,19 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card className="border-2 border-green-200">
                       <CardContent className="p-4 text-center">
-                        <p className="text-sm text-gray-600">Opening Balance</p>
+                        <p className="text-[12px] text-gray-600 text-center">Opening Balance</p>
                         <p className="text-2xl font-bold text-green-600">₹5,000.00</p>
                       </CardContent>
                     </Card>
                     <Card className="border-2 border-blue-200">
                       <CardContent className="p-4 text-center">
-                        <p className="text-sm text-gray-600">Cash In</p>
+                        <p className="text-[12px] text-gray-600 text-center">Cash In</p>
                         <p className="text-2xl font-bold text-blue-600">₹12,500.00</p>
                       </CardContent>
                     </Card>
                     <Card className="border-2 border-purple-200">
                       <CardContent className="p-4 text-center">
-                        <p className="text-sm text-gray-600">Current Balance</p>
+                        <p className="text-[12px] text-gray-600 text-center">Current Balance</p>
                         <p className="text-2xl font-bold text-purple-600">₹17,500.00</p>
                       </CardContent>
                     </Card>
@@ -1973,7 +1945,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                           <div className="flex items-center justify-between">
                             <div>
                               <h4 className="font-semibold text-lg">{barcodeProduct.name}</h4>
-                              <p className="text-sm text-gray-600">Price: ₹{barcodeProduct.price?.toFixed(2)}</p>
+                              <p className="text-[12px] text-gray-600 text-center">Price: ₹{barcodeProduct.price?.toFixed(2)}</p>
                             </div>
                             <Button className="bg-linear-to-br from-green-500 to-green-600">
                               <Plus className="h-4 w-4 mr-2" />
@@ -2049,15 +2021,15 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
             </div>
           </DialogHeader>
 
-          <div className="p-6">
+          <div className="p-2 flex-1 overflow-hidden">
             {heldOrders.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                <Clock className="h-16 w-16 mx-auto mb-4 opacity-20" />
+              <div className="flex flex-col items-center justify-center py-2 text-gray-500 ">
+                <Clock className="h-24 w-24 mx-auto mb-4 opacity-20" />
                 <p className="font-medium text-lg">No held orders yet</p>
                 <p className="text-sm mt-2">Use the "Hold" button to save orders for later</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 overflow-y-auto max-h-[calc(85vh-220px)]">
                 {heldOrders.map((order) => (
                   <Card key={order.id} className="border-2 border-amber-200 hover:border-amber-400 transition-all hover:shadow-lg">
                     <CardHeader className="bg-linear-to-br from-amber-50 to-amber-100 p-4">
@@ -2485,10 +2457,163 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
         </DialogContent>
       </Dialog>
 
+      {/* Checkout Dialog */}
+      <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
+        <DialogContent className="max-w-md border-0 shadow-2xl">
+          <DialogHeader className="bg-linear-to-br from-green-500 to-green-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+              <ShoppingCart className="h-6 w-6" />
+              Checkout
+            </DialogTitle>
+            <DialogDescription className="text-green-100">
+              Review order and select payment method
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Customer Info */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Name (Optional)</label>
+                <Input
+                  placeholder="Customer name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">Phone (Optional)</label>
+                <Input
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="h-10"
+                />
+              </div>
+            </div>
+
+            {/* Payment Method Selection */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-2 block">Payment Method</label>
+              <div className="grid grid-cols-4 gap-2">
+                <Button
+                  type="button"
+                  variant={paymentMethod === 'CASH' ? 'default' : 'outline'}
+                  onClick={() => setPaymentMethod('CASH')}
+                  className={`flex flex-col items-center gap-1 h-14 ${
+                    paymentMethod === 'CASH' 
+                      ? 'bg-green-600 hover:bg-green-700' 
+                      : 'hover:bg-green-50 hover:border-green-300'
+                  }`}
+                >
+                  <Banknote className="h-5 w-5" />
+                  <span className="text-xs">Cash</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant={paymentMethod === 'UPI' ? 'default' : 'outline'}
+                  onClick={() => setPaymentMethod('UPI')}
+                  className={`flex flex-col items-center gap-1 h-14 ${
+                    paymentMethod === 'UPI' 
+                      ? 'bg-purple-600 hover:bg-purple-700' 
+                      : 'hover:bg-purple-50 hover:border-purple-300'
+                  }`}
+                >
+                  <Smartphone className="h-5 w-5" />
+                  <span className="text-xs">UPI</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant={paymentMethod === 'CARD' ? 'default' : 'outline'}
+                  onClick={() => setPaymentMethod('CARD')}
+                  className={`flex flex-col items-center gap-1 h-14 ${
+                    paymentMethod === 'CARD' 
+                      ? 'bg-blue-600 hover:bg-blue-700' 
+                      : 'hover:bg-blue-50 hover:border-blue-300'
+                  }`}
+                >
+                  <CreditCard className="h-5 w-5" />
+                  <span className="text-xs">Card</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant={paymentMethod === 'GIFT_CARD' ? 'default' : 'outline'}
+                  onClick={() => setPaymentMethod('GIFT_CARD')}
+                  className={`flex flex-col items-center gap-1 h-14 ${
+                    paymentMethod === 'GIFT_CARD' 
+                      ? 'bg-pink-600 hover:bg-pink-700' 
+                      : 'hover:bg-pink-50 hover:border-pink-300'
+                  }`}
+                >
+                  <Wallet className="h-5 w-5" />
+                  <span className="text-xs">Gift</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Order Summary */}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Items ({cart.length})</span>
+                <span className="font-medium">{cart.length} items</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-medium">{formatCurrency(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-green-700">
+                <span>CGST</span>
+                <span className="font-medium">{formatCurrency(cgst)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-green-700">
+                <span>SGST</span>
+                <span className="font-medium">{formatCurrency(sgst)}</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between text-xl font-bold">
+                <span>Total</span>
+                <span className="text-green-600">{formatCurrency(total)}</span>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Order Notes (Optional)</label>
+              <Input
+                placeholder="Special instructions..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="h-10"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setCheckoutOpen(false)}
+              className="flex-1 h-11"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleCheckout}
+              className="flex-1 h-11 bg-linear-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Pay {formatCurrency(total)}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Footer */}
       <footer className="bg-white border-t-2 border-amber-200 mt-auto">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between text-sm text-gray-600">
+          <div className="flex items-center justify-between text-[12px] text-gray-600">
             <div className="flex items-center gap-3">
               <div className="bg-linear-to-br from-amber-500 to-orange-600 p-2 rounded-lg">
                 <Coffee className="h-4 w-4 text-white" />
@@ -2662,10 +2787,10 @@ export default function Page() {
           <CardHeader className="bg-linear-to-br from-amber-600 to-orange-600 text-white rounded-t-lg p-8">
             <div className="flex flex-col items-center gap-4">
               <div className="bg-white/20 p-4 rounded-full">
-                <Coffee className="h-12 w-12" />
+                <Coffee className="h-6 w-6" />
               </div>
               <div className="text-center">
-                <CardTitle className="text-3xl font-bold">Coffee Shop POS</CardTitle>
+                <CardTitle className="text-2xl font-bold text-center">Coffee Shop POS</CardTitle>
                 <CardDescription className="text-amber-100 mt-2">
                   Sign in to continue
                 </CardDescription>

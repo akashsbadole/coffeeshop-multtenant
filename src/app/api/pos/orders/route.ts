@@ -55,10 +55,14 @@ export async function POST(request: Request) {
       sgst,
       cgst,
       totalAmount,
+      total, // Support both 'total' and 'totalAmount' from frontend
       paymentMethod
     } = body
 
-    console.log('Received order request:', JSON.stringify(body, null, 2))
+    // Use total if totalAmount is not provided (handle frontend field name mismatch)
+    const finalTotalAmount = typeof totalAmount === 'number' ? totalAmount : total
+
+    console.log('Received order request:', JSON.stringify({ ...body, totalAmount: finalTotalAmount }, null, 2))
 
     // Validate required fields
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -68,7 +72,7 @@ export async function POST(request: Request) {
       )
     }
 
-    if (typeof subtotal !== 'number' || typeof totalAmount !== 'number') {
+    if (typeof subtotal !== 'number' || typeof finalTotalAmount !== 'number') {
       return NextResponse.json(
         { error: 'Invalid order amounts' },
         { status: 400 }
@@ -119,7 +123,7 @@ export async function POST(request: Request) {
     console.log('Creating order with:', {
       orderNumber: nextOrderNumber,
       itemCount: items.length,
-      totalAmount
+      totalAmount: finalTotalAmount
     })
 
     // Create order
@@ -132,7 +136,7 @@ export async function POST(request: Request) {
         totalGst,
         sgst,
         cgst,
-        totalAmount,
+        totalAmount: finalTotalAmount,
         notes,
         createdById: userId,
         items: {
@@ -148,7 +152,7 @@ export async function POST(request: Request) {
         payments: {
           create: [{
             method: paymentMethod as any,
-            amount: totalAmount,
+            amount: finalTotalAmount,
             status: 'PAID'
           }]
         }
