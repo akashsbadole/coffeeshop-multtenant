@@ -13,6 +13,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner'
 import { MenuManagement } from '@/components/admin/menu-management'
 import { InventoryManagement } from '@/components/admin/inventory-management'
+import { Tables } from '@/components/pos/tabs/Tables/Tables'
+import { KDS } from '@/components/pos/tabs/KDS/KDS'
+import { ProductVariants } from '@/components/pos/tabs/Variants/Variants'
+import { BarcodeScanner } from '@/components/pos/tabs/Barcode/BarcodeScanner'
+import { Returns } from '@/components/pos/tabs/Returns/Returns'
+import { POSInventory } from '@/components/pos/tabs/Inventory/Inventory'
 import {
   ShoppingCart,
   Search,
@@ -600,6 +606,10 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
         setCheckoutOpen(false)
         fetchData()
         toast.success(`Order #${order.orderNumber} - ${formatCurrency(total)}`)
+        
+        // Show receipt dialog automatically
+        setSelectedOrderForReceipt(order)
+        setReceiptDialogOpen(true)
       } else {
         throw new Error('Failed to place order')
       }
@@ -1099,7 +1109,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex gap-[2px] mt-4">
+                        <div className="flex gap-0.5 mt-4">
                           <Button
                             onClick={handleCancelOrder}
                             className="flex-1  text-[12px] h-6 bg-gray-100 hover:bg-gray-200 text-gray-700"
@@ -1554,10 +1564,12 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
             </div>
           </TabsContent>
 
-          {/* Inventory Tab - Manager/Admin only */}
-          <TabsContent value="inventory">
-            <InventoryManagement />
-          </TabsContent>
+          {/* Inventory Tab */}
+          {posConfig?.features.inventory && (
+            <TabsContent value="inventory">
+              <POSInventory />
+            </TabsContent>
+          )}
 
           {/* Menu Tab - Manager/Admin only */}
           <TabsContent value="menu">
@@ -1709,113 +1721,21 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
           {/* Tables Tab (Food POS) */}
           {posConfig?.features.tableManagement && (
             <TabsContent value="tables">
-              <Card className="shadow-xl">
-                <CardHeader className="bg-linear-to-br from-teal-500 to-teal-600 text-white">
-                  <CardTitle className="flex items-center gap-2">
-                    <LayoutGrid className="h-6 w-6" />
-                    Table Management
-                  </CardTitle>
-                  <CardDescription className="text-teal-100">
-                    Manage restaurant tables and seating
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((num) => (
-                      <Card key={num} className="cursor-pointer hover:shadow-lg transition-all border-2 border-teal-200 hover:border-teal-500">
-                        <CardContent className="p-4 text-center">
-                          <div className="bg-linear-to-br from-teal-100 to-teal-200 rounded-lg p-4 mb-2">
-                            <LayoutGrid className="h-8 w-8 mx-auto text-teal-600" />
-                          </div>
-                          <h4 className="font-semibold">Table {num}</h4>
-                          <Badge className="mt-2 bg-green-100 text-green-700">Available</Badge>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                  <div className="mt-6 p-4 bg-teal-50 rounded-lg">
-                    <p className="text-sm text-teal-800">
-                      💡 Click on a table to view orders, start a new order, or manage reservations. 
-                      Tables show their current status: Available (Green), Occupied (Red), Reserved (Yellow).
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <Tables />
             </TabsContent>
           )}
 
           {/* KDS Tab (Food POS) */}
           {posConfig?.features.kitchenDisplay && (
             <TabsContent value="kds">
-              <Card className="shadow-xl">
-                <CardHeader className="bg-linear-to-br from-orange-500 to-orange-600 text-white">
-                  <CardTitle className="flex items-center gap-2">
-                    <Armchair className="h-6 w-6" />
-                    Kitchen Display System
-                  </CardTitle>
-                  <CardDescription className="text-orange-100">
-                    Real-time order tracking for kitchen staff
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3].map((order) => (
-                      <Card key={order} className="border-2 border-orange-200 bg-linear-to-br from-orange-50 to-yellow-50">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <Badge className="bg-orange-500 text-white">Table {order}</Badge>
-                            <span className="text-sm text-gray-500">Order #{1000 + order}</span>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center p-2 bg-white rounded-lg">
-                              <span className="font-medium">2x Burger</span>
-                              <Badge className="bg-yellow-400 text-yellow-900">Preparing</Badge>
-                            </div>
-                            <div className="flex justify-between items-center p-2 bg-white rounded-lg">
-                              <span className="font-medium">1x Fries</span>
-                              <Badge className="bg-yellow-400 text-yellow-900">Preparing</Badge>
-                            </div>
-                          </div>
-                          <Button className="w-full mt-4 bg-linear-to-br from-green-500 to-green-600">
-                            Mark as Ready
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+              <KDS />
             </TabsContent>
           )}
 
           {/* Returns Tab (Garment/Retail POS) */}
           {posConfig?.features.returns && (
             <TabsContent value="returns">
-              <Card className="shadow-xl">
-                <CardHeader className="bg-linear-to-br from-red-500 to-red-600 text-white">
-                  <CardTitle className="flex items-center gap-2">
-                    <RotateCw className="h-6 w-6" />
-                    Returns & Exchanges
-                  </CardTitle>
-                  <CardDescription className="text-red-100">
-                    Manage product returns and exchanges
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <h4 className="font-semibold text-red-800 mb-2">Recent Returns</h4>
-                      <p className="text-[12px] text-gray-600 text-center">No returns in progress</p>
-                    </div>
-                    <Button className="w-full bg-linear-to-br from-red-500 to-red-600">
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Return Request
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <Returns />
             </TabsContent>
           )}
 
@@ -1919,78 +1839,14 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
           {/* Barcode Tab (Retail POS) */}
           {posConfig?.features.barcodes && (
             <TabsContent value="barcode">
-              <Card className="shadow-xl">
-                <CardHeader className="bg-linear-to-br from-blue-500 to-blue-600 text-white">
-                  <CardTitle className="flex items-center gap-2">
-                    <ScanBarcode className="h-6 w-6" />
-                    Barcode Scanner
-                  </CardTitle>
-                  <CardDescription className="text-blue-100">
-                    Scan barcodes to quickly add products to cart
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div>
-                      <Input
-                        placeholder="Scan or enter barcode..."
-                        value={barcodeInput}
-                        onChange={(e) => setBarcodeInput(e.target.value)}
-                        className="text-lg h-14"
-                      />
-                    </div>
-                    {barcodeProduct && (
-                      <Card className="border-2 border-green-200 bg-green-50">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-semibold text-lg">{barcodeProduct.name}</h4>
-                              <p className="text-[12px] text-gray-600 text-center">Price: ₹{barcodeProduct.price?.toFixed(2)}</p>
-                            </div>
-                            <Button className="bg-linear-to-br from-green-500 to-green-600">
-                              <Plus className="h-4 w-4 mr-2" />
-                              Add to Cart
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-800">
-                        💡 Scan product barcodes using a barcode scanner or manually enter the barcode number to quickly add products to your cart.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <BarcodeScanner />
             </TabsContent>
           )}
 
           {/* Variants Tab (Garment POS) */}
           {posConfig?.features.sizeVariants && (
             <TabsContent value="variants">
-              <Card className="shadow-xl">
-                <CardHeader className="bg-linear-to-br from-indigo-500 to-indigo-600 text-white">
-                  <CardTitle className="flex items-center gap-2">
-                    <Tag className="h-6 w-6" />
-                    Product Variants
-                  </CardTitle>
-                  <CardDescription className="text-indigo-100">
-                    Manage size and color variants for products
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="text-center py-12 text-gray-500">
-                    <Tag className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                    <p className="font-medium text-lg">Product variants management</p>
-                    <p className="text-sm mt-2">Create and manage size/color variants for your products</p>
-                    <Button className="mt-4 bg-linear-to-br from-indigo-500 to-indigo-600">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Variant
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <ProductVariants />
             </TabsContent>
           )}
         </Tabs>

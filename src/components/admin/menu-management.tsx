@@ -203,11 +203,11 @@ export function MenuManagement() {
     <div>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 mb-6 bg-white shadow-lg p-1 rounded-xl border border-amber-200">
-          <TabsTrigger value="items" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+          <TabsTrigger value="items" className="data-[state=active]:bg-linear-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
             <Package className="h-4 w-4 mr-2" />
             Menu Items
           </TabsTrigger>
-          <TabsTrigger value="categories" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+          <TabsTrigger value="categories" className="data-[state=active]:bg-linear-to-r data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
             <Edit3 className="h-4 w-4 mr-2" />
             Categories
           </TabsTrigger>
@@ -216,7 +216,7 @@ export function MenuManagement() {
         {/* Menu Items Tab */}
         <TabsContent value="items">
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+            <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
@@ -241,7 +241,7 @@ export function MenuManagement() {
             </CardHeader>
             <CardContent className="p-6">
               <div className="border border-amber-200 rounded-lg overflow-hidden">
-                <ScrollArea className="h-[500px]">
+                <ScrollArea className="h-125">
                   {menuItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-16 text-gray-500">
                       <Utensils className="h-20 w-20 mb-4 opacity-20" />
@@ -302,7 +302,7 @@ export function MenuManagement() {
         {/* Categories Tab */}
         <TabsContent value="categories">
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+            <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
@@ -360,7 +360,7 @@ export function MenuManagement() {
         if (!open) resetForm()
       }}>
         <DialogContent className="max-w-lg border-0 shadow-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-2xl font-bold">
               {activeTab === 'items' ? 'Add Menu Item' : 'Add Category'}
             </DialogTitle>
@@ -469,7 +469,7 @@ export function MenuManagement() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 h-11 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
+                  className="flex-1 h-11 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
                 >
                   {isLoading ? 'Saving...' : 'Add Item'}
                 </Button>
@@ -516,7 +516,7 @@ export function MenuManagement() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 h-11 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
+                  className="flex-1 h-11 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
                 >
                   {isLoading ? 'Saving...' : 'Add Category'}
                 </Button>
