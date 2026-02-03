@@ -19,6 +19,7 @@ import { ProductVariants } from '@/components/pos/tabs/Variants/Variants'
 import { BarcodeScanner } from '@/components/pos/tabs/Barcode/BarcodeScanner'
 import { Returns } from '@/components/pos/tabs/Returns/Returns'
 import { POSInventory } from '@/components/pos/tabs/Inventory/Inventory'
+import { Settings } from '@/components/pos/tabs/Settings/Settings'
 import {
   ShoppingCart,
   Search,
@@ -33,7 +34,7 @@ import {
   Utensils,
   Cake,
   IceCream2,
-  Settings,
+  Settings as SettingsIcon,
   BarChart3,
   Package,
   Users,
@@ -85,6 +86,7 @@ import {
 } from '@/store'
 
 import { selectSubtotal, selectTotalGst, selectTotal } from '@/store/cart'
+import Link from 'next/link'
 
 interface DashboardProps {
   user: any
@@ -763,6 +765,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
       <header className="bg-linear-to-br from-amber-600 to-orange-600 text-white shadow-xl">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
+            <Link href="/">
             <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-xl backdrop-blur-sm">
               <div className="bg-white/20 p-2 rounded-lg">
                 <Coffee className="h-6 w-6" />
@@ -777,6 +780,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 </div>
               </div>
             </div>
+            </Link>
             
             <div className="flex items-center gap-4">
               {/* Date Badge */}
@@ -863,10 +867,18 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 Menu
               </TabsTrigger>
             )}
+            {/* Staff Tab - Admin only */}
             {user.role === 'ADMIN' && (
-              <TabsTrigger value="settings" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+              <TabsTrigger value="staff" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white">
                 <Users className="h-4 w-4 mr-2" />
                 Staff
+              </TabsTrigger>
+            )}
+            {/* Settings Tab - Admin only */}
+            {user.role === 'ADMIN' && (
+              <TabsTrigger value="settings" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+                <SettingsIcon className="h-4 w-4 mr-2" />
+                Settings
               </TabsTrigger>
             )}
             {posConfig?.features.returns && (
@@ -903,9 +915,9 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
           {/* POS Tab */}
           <TabsContent value="pos" className="mt-0 h-full">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
-              {/* Menu Section */}
-              <div className="lg:col-span-2 flex flex-col gap-4">
+            <div className="flex h-full">
+              {/* Left side - Menu/Categories */}
+              <div className="flex-1 flex flex-col gap-4 overflow-hidden">
                 {/* Category Filter */}
                 <div className="flex gap-2 overflow-x-auto py-2">
                   <Button
@@ -913,8 +925,8 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                     variant={selectedCategory === 'all' ? 'default' : 'outline'}
                     onClick={() => setSelectedCategory('all')}
                     className={selectedCategory === 'all'
-                      ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white shadow-lg p-4' 
-                      : 'bg-white hover:bg-amber-50 border-amber-200'
+                      ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white shadow-lg shrink-0'
+                      : 'bg-white hover:bg-amber-50 border-amber-200 shrink-0'
                     }
                   >
                     All Items
@@ -927,7 +939,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                       className={`shrink-0 flex items-center gap-2 ${
                         selectedCategory === category.id
                           ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white shadow-lg'
-                          : 'bg-white hover:bg-amber-50 border-amber-200 p-4'
+                          : 'bg-white hover:bg-amber-50 border-amber-200'
                       }`}
                     >
                       {getCategoryIcon(category.name)}
@@ -950,7 +962,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
                 {/* Menu Items Grid */}
                 <ScrollArea className="flex-1 pr-4 h-full overflow-y-auto">
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 overflow-y-auto">
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 overflow-y-auto pb-4">
                     {filteredItems.map((item) => (
                       <Card
                         key={item.id}
@@ -983,7 +995,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                             </div>
                           </CardContent>
                         </Card>
-                    ))}
+                      ))}
                   </div>
 
                   {filteredItems.length === 0 && (
@@ -996,157 +1008,155 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 </ScrollArea>
               </div>
 
-              {/* Cart Section */}
-              <div className="flex flex-col gap-4">
-                <Card className="flex-1 flex flex-col shadow-xl border-0 overflow-hidden p-0">
-                  <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white p-4">
-                    <CardTitle className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ShoppingCart className="h-6 w-6" />
-                        Current Order
-                        {cart.length > 0 && (
-                          <Badge variant="secondary" className="bg-white/20 text-white border-0">
-                            {cart.length} {cart.length === 1 ? 'item' : 'items'}
-                          </Badge>
-                        )}
-                      </div>
-                    </CardTitle>
-                  </CardHeader>
-
-                  <CardContent className="flex-1 p-4 flex flex-col bg-white">
-                    {cart.length === 0 ? (
-                      <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-                        <div className="bg-linear-to-br from-amber-100 to-orange-100 p-6 rounded-full mb-4">
-                          <ShoppingCart className="h-6 w-6 text-amber-400" />
-                        </div>
-                        <p className="font-medium">Your cart is empty</p>
-                        <p className="text-sm">Add delicious items from menu</p>
-                      </div>
-                    ) : (
-                      <ScrollArea className="flex-1 pr-2">
-                        <div className="space-y-3">
-                          {cart.map((item) => (
-                            <div
-                              key={item.menuItem.id}
-                              className="flex flex-col p-4 bg-linear-to-br from-gray-50 to-amber-50 rounded-xl border border-gray-100 hover:border-amber-200 transition-all"
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-semibold text-gray-900 line-clamp-1">
-                                    {item.menuItem.name}
-                                  </h4>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    {formatCurrency(item.menuItem.price)} each
-                                  </p>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeFromCart(item.menuItem.id)}
-                                  className="hover:bg-red-50 hover:text-red-600 shrink-0"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                              <div className="flex items-center justify-between mt-3">
-                                <div className="flex items-center gap-3">
-                                  <Button
-                                    size="icon"
-                                    variant="outline"
-                                    onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
-                                    className="h-8 w-8 hover:bg-amber-50 hover:border-amber-300"
-                                    disabled={item.quantity <= 1}
-                                  >
-                                    <Minus className="h-3 w-3" />
-                                  </Button>
-                                  <span className="font-bold w-10 text-center text-lg">
-                                    {item.quantity}
-                                  </span>
-                                  <Button
-                                    size="icon"
-                                    variant="outline"
-                                    onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
-                                    className="h-8 w-8 hover:bg-amber-50 hover:border-amber-300"
-                                  >
-                                    <Plus className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                                <div className="text-right">
-                                  <span className="font-bold text-xl text-transparent bg-clip-text bg-linear-to-br from-amber-600 to-orange-600">
-                                    {formatCurrency(item.subtotal)}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                          </div>
-                      </ScrollArea>
-                    )}
-
-                    {/* Order Summary */}
+              {/* Right side - Sticky Order Panel */}
+              <div className="w-80 sticky top-0 h-screen flex flex-col bg-white border-l shadow-xl">
+                {/* Order Summary Header */}
+                <div className="bg-linear-to-br from-amber-500 to-orange-600 text-white p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShoppingCart className="h-6 w-6" />
+                      <h2 className="text-lg font-bold">Current Order</h2>
+                    </div>
                     {cart.length > 0 && (
-                      <>
-                        <div className="mt-4 space-y-3 border-t-2 border-amber-200 pt-4 bg-linear-to-br from-amber-50 to-orange-50 rounded-xl p-4">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Subtotal</span>
-                            <span className="font-semibold">{formatCurrency(subtotal)}</span>
+                      <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                        {cart.length} {cart.length === 1 ? 'item' : 'items'}
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                {/* Cart Items - scrollable */}
+                <div className="flex-1 overflow-auto p-4">
+                  {cart.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                      <div className="bg-linear-to-br from-amber-100 to-orange-100 p-6 rounded-full mb-4">
+                        <ShoppingCart className="h-6 w-6 text-amber-400" />
+                      </div>
+                      <p className="font-medium">Your cart is empty</p>
+                      <p className="text-sm">Add delicious items from menu</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {cart.map((item) => (
+                        <div
+                          key={item.menuItem.id}
+                          className="flex flex-col p-4 bg-linear-to-br from-gray-50 to-amber-50 rounded-xl border border-gray-100 hover:border-amber-200 transition-all"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 line-clamp-1">
+                                {item.menuItem.name}
+                              </h4>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {formatCurrency(item.menuItem.price)} each
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeFromCart(item.menuItem.id)}
+                              className="hover:bg-red-50 hover:text-red-600 shrink-0"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
                           </div>
-                          <div className="flex justify-between text-sm text-green-700">
-                            <span>CGST ({subtotal > 0 ? ((totalGst/2)/subtotal*100).toFixed(1) : '0'}%)</span>
-                            <span className="font-semibold">{formatCurrency(cgst)}</span>
-                          </div>
-                          <div className="flex justify-between text-sm text-green-700">
-                            <span>SGST ({subtotal > 0 ? ((totalGst/2)/subtotal*100).toFixed(1) : '0'}%)</span>
-                            <span className="font-semibold">{formatCurrency(sgst)}</span>
-                          </div>
-                          <Separator />
-                          <div className="flex justify-between text-xl font-bold">
-                            <span>Total</span>
-                            <span className="text-transparent bg-clip-text bg-linear-to-br from-amber-600 to-orange-600">
-                              {formatCurrency(total)}
-                            </span>
+                          <div className="flex items-center justify-between mt-3">
+                            <div className="flex items-center gap-3">
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
+                                className="h-8 w-8 hover:bg-amber-50 hover:border-amber-300"
+                                disabled={item.quantity <= 1}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                              <span className="font-bold w-10 text-center text-lg">
+                                {item.quantity}
+                              </span>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                                className="h-8 w-8 hover:bg-amber-50 hover:border-amber-300"
+                              >
+                                <Plus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <div className="text-right">
+                              <span className="font-bold text-xl text-transparent bg-clip-text bg-linear-to-br from-amber-600 to-orange-600">
+                                {formatCurrency(item.subtotal)}
+                              </span>
+                            </div>
                           </div>
                         </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-0.5 mt-4">
-                          <Button
-                            onClick={handleCancelOrder}
-                            className="flex-1  text-[12px] h-6 bg-gray-100 hover:bg-gray-200 text-gray-700"
-                            disabled={cart.length === 0}
-                            >
-                              <RotateCcw className="h-4 w-4 mr-2" />
-                              Cancel
-                            </Button>
-                          <Button
-                            onClick={handleHoldOrder}
-                            className="flex-1  text-[12px] h-6 bg-linear-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg"
-                            disabled={cart.length === 0}
-                            >
-                              <Clock className="h-4 w-4 mr-2" />
-                              Hold
-                            </Button>
-                            <Button
-                              onClick={() => setHeldOrdersOpen(true)}
-                              className="flex-1  text-[12px] h-6 bg-linear-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
-                              disabled={cart.length === 0}
-                            >
-                              <Clock className="h-4 w-4 mr-2" />
-                              Held ({heldOrders.length})
-                            </Button>
-                            <Button
-                              onClick={() => setCheckoutOpen(true)}
-                              className="flex-1  text-[12px] h-6  bg-linear-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-xl"
-                              disabled={cart.length === 0}
-                            >
-                              <ShoppingCart className="h-5 w-5 mr-2" />
-                              Pay
-                            </Button>
-                          </div>
-                        </>
-                    )}
-                  </CardContent>
-                </Card>
+                {/* Totals */}
+                {cart.length > 0 && (
+                  <div className="border-t bg-gray-50 p-4 space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="font-semibold">{formatCurrency(subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-green-700">
+                      <span>CGST ({subtotal > 0 ? ((totalGst/2)/subtotal*100).toFixed(1) : '0'}%)</span>
+                      <span className="font-semibold">{formatCurrency(cgst)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-green-700">
+                      <span>SGST ({subtotal > 0 ? ((totalGst/2)/subtotal*100).toFixed(1) : '0'}%)</span>
+                      <span className="font-semibold">{formatCurrency(sgst)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Total</span>
+                      <span className="text-transparent bg-clip-text bg-linear-to-br from-amber-600 to-orange-600">
+                        {formatCurrency(total)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                {cart.length > 0 && (
+                  <div className="border-t p-4 space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        onClick={handleCancelOrder}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700"
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleHoldOrder}
+                        className="bg-linear-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                      >
+                        <Clock className="h-4 w-4 mr-2" />
+                        Hold
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        onClick={() => setHeldOrdersOpen(true)}
+                        className="bg-linear-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                      >
+                        <Clock className="h-4 w-4 mr-2" />
+                        Held ({heldOrders.length})
+                      </Button>
+                      <Button
+                        onClick={() => setCheckoutOpen(true)}
+                        className="bg-linear-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+                      >
+                        <ShoppingCart className="h-5 w-5 mr-2" />
+                        Pay
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -1576,146 +1586,31 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
             <MenuManagement />
           </TabsContent>
 
+          {/* Staff Tab - Admin only */}
+          <TabsContent value="staff">
+            <Card className="shadow-xl">
+              <CardHeader className="bg-linear-to-br from-blue-500 to-blue-600 text-white">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-6 w-6" />
+                  Staff Management
+                </CardTitle>
+                <CardDescription className="text-blue-100">
+                  Manage staff accounts and permissions
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="text-center py-12 text-gray-500">
+                  <Users className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                  <p className="font-medium text-lg">Staff Management</p>
+                  <p className="text-sm mt-2">Staff management features coming soon</p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Settings Tab - Admin only */}
           <TabsContent value="settings">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Staff Management */}
-              <Card className="shadow-xl">
-                <CardHeader className="bg-linear-to-br from-purple-500 to-purple-600 text-white">
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-6 w-6" />
-                    Staff Management
-                  </CardTitle>
-                  <CardDescription className="text-purple-100">
-                    Manage staff accounts and permissions
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="text-center py-12 text-gray-500">
-                    <Users className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                    <p className="font-medium text-lg">Staff management coming soon</p>
-                    <p className="text-sm mt-2">User management will be available in the next update</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Data Import/Export */}
-              <Card className="shadow-xl">
-                <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white">
-                  <CardTitle className="flex items-center gap-2">
-                    <Download className="h-6 w-6" />
-                    Data Import & Export
-                  </CardTitle>
-                  <CardDescription className="text-amber-100">
-                    Backup, restore, and migrate your data
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6 space-y-4">
-                  {/* Export Section */}
-                  <div>
-                    <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                      <Download className="h-5 w-5 text-amber-600" />
-                      Export Data
-                    </h3>
-                    <div className="space-y-2">
-                      <Button
-                        onClick={() => window.open('/api/export?type=all', '_blank')}
-                        className="w-full justify-start bg-linear-to-br from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Export All Data (Users, Products, Categories, Orders)
-                      </Button>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => window.open('/api/export?type=users', '_blank')}
-                          className="justify-start"
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          Export Users
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => window.open('/api/export?type=products', '_blank')}
-                          className="justify-start"
-                        >
-                          <Utensils className="h-4 w-4 mr-2" />
-                          Export Products
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => window.open('/api/export?type=categories', '_blank')}
-                          className="justify-start"
-                        >
-                          <Package className="h-4 w-4 mr-2" />
-                          Export Categories
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => window.open('/api/export?type=orders', '_blank')}
-                          className="justify-start"
-                        >
-                          <Receipt className="h-4 w-4 mr-2" />
-                          Export Orders
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Import Section */}
-                  <div>
-                    <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
-                      <Upload className="h-5 w-5 text-purple-600" />
-                      Import Data
-                    </h3>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-semibold text-gray-700 mb-2 block">Select Import Type</label>
-                        <select
-                          id="importType"
-                          className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-purple-500"
-                        >
-                          <option value="all">Import All Data</option>
-                          <option value="users">Import Users Only</option>
-                          <option value="products">Import Products Only</option>
-                          <option value="categories">Import Categories Only</option>
-                          <option value="orders">Import Orders (Backup)</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="text-sm font-semibold text-gray-700 mb-2 block">Upload JSON File</label>
-                        <Input
-                          type="file"
-                          accept=".json"
-                          onChange={handleFileImport}
-                          className="cursor-pointer"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Select the JSON file exported from this system
-                        </p>
-                      </div>
-
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                        <p className="text-sm text-yellow-800 flex items-start gap-2">
-                          <span className="font-semibold">⚠️ Warning:</span>
-                          <span>Importing orders will create duplicate order numbers. Use imports only for data migration or backup restoration.</span>
-                        </p>
-                      </div>
-
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <p className="text-sm text-blue-800 flex items-start gap-2">
-                          <span className="font-semibold">ℹ️ Note:</span>
-                          <span>Existing data (same email, product name, or order number) will be skipped during import.</span>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <Settings />
           </TabsContent>
 
           {/* Tables Tab (Food POS) */}

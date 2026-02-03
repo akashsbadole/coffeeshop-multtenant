@@ -185,6 +185,10 @@ model StoreSettings {
   enableReturns         Boolean @default(false)
   enableExchanges       Boolean @default(false)
   enableLoyaltyProgram  Boolean @default(false)
+  defaultGstRate       GstRate   @default(EIGHTEEN)
+  gstInclusivePricing  Boolean   @default(false)
+  footerText           String?
+  termsConditions      String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
