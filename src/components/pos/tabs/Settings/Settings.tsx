@@ -617,15 +617,16 @@ export function Settings() {
                 {FEATURE_FLAGS.map((feature) => (
                   <div
                     key={feature.key}
-                    className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200"
+                    className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200 text-black!"
                   >
-                    <Label htmlFor={feature.key} className="text-sm font-medium cursor-pointer">
+                    <Label htmlFor={feature.key} className="text-sm font-medium cursor-pointer text-black!">
                       {feature.label}
                     </Label>
                     <Switch
                       id={feature.key}
                       checked={formData[feature.key as keyof StoreSettings] as boolean || false}
                       onCheckedChange={(checked) => updateFormData(feature.key as keyof StoreSettings, checked)}
+                      className='text-red! outline-amber-900! border-amber-800'
                     />
                   </div>
                 ))}

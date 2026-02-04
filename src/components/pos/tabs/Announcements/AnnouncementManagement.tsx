@@ -350,20 +350,20 @@ export function AnnouncementManagement() {
             <Table>
               <TableHeader className="bg-amber-50 sticky top-0">
                 <TableRow>
-                  <TableHead className="font-semibold">Title</TableHead>
-                  <TableHead className="font-semibold">Type</TableHead>
-                  <TableHead className="font-semibold">Priority</TableHead>
-                  <TableHead className="font-semibold">Target</TableHead>
-                  <TableHead className="font-semibold">Schedule</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold text-right">Actions</TableHead>
+                  <TableHead className="font-semibold text-black">Title</TableHead>
+                  <TableHead className="font-semibold text-black">Type</TableHead>
+                  <TableHead className="font-semibold text-black">Priority</TableHead>
+                  <TableHead className="font-semibold text-black">Target</TableHead>
+                  <TableHead className="font-semibold text-black">Schedule</TableHead>
+                  <TableHead className="font-semibold text-black">Status</TableHead>
+                  <TableHead className="font-semibold text-right text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAnnouncements.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-12 text-gray-500">
-                      <Megaphone className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                      <Megaphone className="h-16 w-16 mx-auto mb-4 opacity-20" color='#fff' />
                       <p className="font-medium">No announcements found</p>
                       <p className="text-sm">Create your first announcement to get started</p>
                     </TableCell>
@@ -509,12 +509,12 @@ export function AnnouncementManagement() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="announcement-target">Target Role</Label>
-                <Select value={announcementForm.targetRole} onValueChange={(value: any) => setAnnouncementForm({ ...announcementForm, targetRole: value || undefined })}>
+                <Select value={announcementForm.targetRole || ''} onValueChange={(value: string) => setAnnouncementForm({ ...announcementForm, targetRole: (value as 'CASHIER' | 'MANAGER' | 'ADMIN') || undefined })}>
                   <SelectTrigger id="announcement-target">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={undefined}>All Roles</SelectItem>
+                    <SelectItem value="">All Roles</SelectItem>
                     <SelectItem value="CASHIER">Cashier</SelectItem>
                     <SelectItem value="MANAGER">Manager</SelectItem>
                     <SelectItem value="ADMIN">Admin</SelectItem>
@@ -639,12 +639,12 @@ export function AnnouncementManagement() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-announcement-target">Target Role</Label>
-                <Select value={announcementForm.targetRole} onValueChange={(value: any) => setAnnouncementForm({ ...announcementForm, targetRole: value || undefined })}>
+                <Select value={announcementForm.targetRole || ''} onValueChange={(value: string) => setAnnouncementForm({ ...announcementForm, targetRole: (value as 'CASHIER' | 'MANAGER' | 'ADMIN') || undefined })}>
                   <SelectTrigger id="edit-announcement-target">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={undefined}>All Roles</SelectItem>
+                    <SelectItem value="">All Roles</SelectItem>
                     <SelectItem value="CASHIER">Cashier</SelectItem>
                     <SelectItem value="MANAGER">Manager</SelectItem>
                     <SelectItem value="ADMIN">Admin</SelectItem>

@@ -359,20 +359,20 @@ export function PurchaseOrderManagement() {
             <Table>
               <TableHeader className="bg-amber-50 sticky top-0">
                 <TableRow>
-                  <TableHead className="font-semibold">PO #</TableHead>
-                  <TableHead className="font-semibold">Supplier</TableHead>
-                  <TableHead className="font-semibold">Items</TableHead>
-                  <TableHead className="font-semibold">Total Amount</TableHead>
-                  <TableHead className="font-semibold">Expected</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold text-right">Actions</TableHead>
+                  <TableHead className="font-semibold text-black">PO #</TableHead>
+                  <TableHead className="font-semibold text-black">Supplier</TableHead>
+                  <TableHead className="font-semibold text-black">Items</TableHead>
+                  <TableHead className="font-semibold text-black">Total Amount</TableHead>
+                  <TableHead className="font-semibold text-black">Expected</TableHead>
+                  <TableHead className="font-semibold text-black">Status</TableHead>
+                  <TableHead className="font-semibold text-right text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPOs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-12 text-gray-500">
-                      <ShoppingCart className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                      <ShoppingCart className="h-16 w-16 mx-auto mb-4 opacity-20" color='#fff' />
                       <p className="font-medium">No purchase orders found</p>
                       <p className="text-sm">Create your first purchase order to get started</p>
                     </TableCell>

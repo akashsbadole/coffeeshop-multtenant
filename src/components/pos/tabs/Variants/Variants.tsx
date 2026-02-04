@@ -319,9 +319,9 @@ export function ProductVariants() {
       {filteredProducts.length === 0 ? (
         <Card className="shadow-xl border-0">
           <CardContent className="p-12 text-center">
-            <Tag className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900">No variants yet</h3>
-            <p className="text-gray-500 mt-1">Add variants to your products</p>
+            <Tag className="h-16 w-16 mx-auto text-gray-300 mb-4" color='#fff' />
+            <h3 className="text-lg font-semibold text-white">No variants yet</h3>
+            <p className="text-white mt-1">Add variants to your products</p>
           </CardContent>
         </Card>
       ) : (

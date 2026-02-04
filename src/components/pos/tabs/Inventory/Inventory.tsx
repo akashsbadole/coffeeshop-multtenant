@@ -282,7 +282,7 @@ export function POSInventory() {
                           <div className="mt-3">
                             <div className="flex items-center justify-between text-xs mb-1">
                               <span className="text-gray-600">Stock Level</span>
-                              <span className="font-semibold">{item.quantity} {item.unit || 'units'}</span>
+                              <span className="font-semibold text-black">{item.quantity} {item.unit || 'units'}</span>
                             </div>
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div

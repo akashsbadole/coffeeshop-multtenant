@@ -1159,7 +1159,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                             {item.name}
                           </CardTitle>
                           {item.description && (
-                            <p className="text-xs text-black line-clamp-2">
+                            <p className="text-xs text-black! line-clamp-2">
                               {item.description}
                             </p>
                           )}
@@ -1285,15 +1285,15 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   <div className="border-t bg-gray-50 p-4 space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Subtotal</span>
-                      <span className="font-semibold">{formatCurrency(subtotal)}</span>
+                      <span className="font-semibold text-black">{formatCurrency(subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-green-700">
                       <span>CGST ({subtotal > 0 ? ((totalGst/2)/subtotal*100).toFixed(1) : '0'}%)</span>
-                      <span className="font-semibold">{formatCurrency(cgst)}</span>
+                      <span className="font-semibold text-black">{formatCurrency(cgst)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-green-700">
                       <span>SGST ({subtotal > 0 ? ((totalGst/2)/subtotal*100).toFixed(1) : '0'}%)</span>
-                      <span className="font-semibold">{formatCurrency(sgst)}</span>
+                      <span className="font-semibold text-black">{formatCurrency(sgst)}</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between text-xl font-bold">
@@ -1720,14 +1720,15 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 <CardContent className="p-6 space-y-6">
                   {/* Gift Card Lookup */}
                   <div>
-                    <h3 className="font-semibold text-lg mb-3">Check Gift Card Balance</h3>
+                    <h3 className="font-semibold text-lg mb-3 text-white">Check Gift Card Balance</h3>
                     <div className="flex gap-2">
                       <Input
                         placeholder="Enter card number"
                         value={giftCardLookup}
                         onChange={(e) => setGiftCardLookup(e.target.value)}
+                        className='text-white'
                       />
-                      <Button className="bg-linear-to-br from-pink-500 to-pink-600">
+                      <Button className="text-black">
                         Check
                       </Button>
                     </div>
@@ -1735,15 +1736,15 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
                   {/* Issue New Gift Card */}
                   <div>
-                    <h3 className="font-semibold text-lg mb-3">Issue New Gift Card</h3>
+                    <h3 className="font-semibold text-lg mb-3 text-white">Issue New Gift Card</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input placeholder="Card Number" />
-                      <Input type="password" placeholder="PIN" />
-                      <Input type="number" placeholder="Initial Balance (₹)" />
-                      <Input type="date" placeholder="Expiry Date" />
+                      <Input placeholder="Card Number" className='text-white' />
+                      <Input type="password" placeholder="PIN" className='text-white' />
+                      <Input type="number" placeholder="Initial Balance (₹)" className='text-white' />
+                      <Input type="date" placeholder="Expiry Date" className='text-white' />
                     </div>
                     <Button className="w-full mt-4 bg-linear-to-br from-pink-500 to-pink-600">
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-4 w-4 mr-2" color='#fff' />
                       Issue Gift Card
                     </Button>
                   </div>
@@ -1898,7 +1899,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                     <CardContent className="p-4">
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 text-sm">
-                          <span className="font-semibold">Items:</span>
+                          <span className="font-semibold text-black">Items:</span>
                           <span>{order.items.length} items</span>
                         </div>
                         <div className="border-t border-2 border-gray-300 pt-3">
@@ -1918,15 +1919,15 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                         <div className="border-t-2 border-gray-300 pt-3 space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Subtotal:</span>
-                            <span className="font-semibold">₹{order.subtotal.toFixed(2)}</span>
+                            <span className="font-semibold text-black">₹{order.subtotal.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between text-sm text-green-700">
                             <span>CGST:</span>
-                            <span className="font-semibold">₹{order.sgst.toFixed(2)}</span>
+                            <span className="font-semibold text-black">₹{order.sgst.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between text-sm text-green-700">
                             <span>SGST:</span>
-                            <span className="font-semibold">₹{order.cgst.toFixed(2)}</span>
+                            <span className="font-semibold text-black">₹{order.cgst.toFixed(2)}</span>
                           </div>
                           <Separator />
                           <div className="flex justify-between text-xl font-bold">
@@ -1972,19 +1973,19 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Order #:</span>
-                  <span className="font-semibold">{selectedOrderForReceipt.orderNumber}</span>
+                  <span className="font-semibold text-black">{selectedOrderForReceipt.orderNumber}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Date:</span>
-                  <span className="font-semibold">{new Date(selectedOrderForReceipt.createdAt).toLocaleString('en-IN')}</span>
+                  <span className="font-semibold text-black">{new Date(selectedOrderForReceipt.createdAt).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Customer:</span>
-                  <span className="font-semibold">{selectedOrderForReceipt.customerName || 'Walk-in'}</span>
+                  <span className="font-semibold text-black">{selectedOrderForReceipt.customerName || 'Walk-in'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Items:</span>
-                  <span className="font-semibold">{selectedOrderForReceipt.items?.length || 0} items</span>
+                  <span className="font-semibold text-black">{selectedOrderForReceipt.items?.length || 0} items</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
@@ -2043,7 +2044,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
             {selectedOrderForReceipt && (
               <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                <p className="text-gray-600 mb-1">Order #<span className="font-semibold">{selectedOrderForReceipt.orderNumber}</span></p>
+                <p className="text-gray-600 mb-1">Order #<span className="font-semibold text-black">{selectedOrderForReceipt.orderNumber}</span></p>
                 <p className="text-amber-600 font-bold">Total: {formatCurrency(selectedOrderForReceipt.totalAmount)}</p>
               </div>
             )}
@@ -2096,7 +2097,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
             {selectedOrderForReceipt && (
               <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                <p className="text-gray-600 mb-1">Order #<span className="font-semibold">{selectedOrderForReceipt.orderNumber}</span></p>
+                <p className="text-gray-600 mb-1">Order #<span className="font-semibold text-black">{selectedOrderForReceipt.orderNumber}</span></p>
                 <p className="text-amber-600 font-bold">Total: {formatCurrency(selectedOrderForReceipt.totalAmount)}</p>
               </div>
             )}
@@ -2241,7 +2242,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
             </div>
             <div className="bg-purple-50 p-4 rounded-lg">
               <p className="text-sm text-purple-800">
-                <span className="font-semibold">Password Requirements:</span>
+                <span className="font-semibold text-black">Password Requirements:</span>
                 <ul className="list-disc list-inside mt-2 space-y-1">
                   <li>Minimum 6 characters</li>
                   <li>Should be different from current password</li>
@@ -2589,7 +2590,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 <Coffee className="h-4 w-4 text-white" />
               </div>
               <div>
-                <span className="font-semibold">Coffee Shop POS</span>
+                <span className="font-semibold text-black">Coffee Shop POS</span>
                 <span className="mx-2">•</span>
                 <span className="text-white">India GST Compliant</span>
               </div>

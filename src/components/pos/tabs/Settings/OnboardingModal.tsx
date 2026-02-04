@@ -362,9 +362,9 @@ export default function OnboardingModal({ open, onOpenChange, onComplete }: Onbo
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <div className="flex items-center justify-between p-4 bg-amber-50 rounded-lg border border-amber-200 text-black">
                     <div>
-                      <Label htmlFor="gstInclusive" className="text-sm font-medium cursor-pointer text-black">
+                      <Label htmlFor="gstInclusive" className="text-sm font-medium cursor-pointer text-black!" style={{color:'black'}}>
                         GST Inclusive Pricing
                       </Label>
                       <p className="text-xs text-gray-500 mt-1">

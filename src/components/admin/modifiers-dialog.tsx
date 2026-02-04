@@ -218,7 +218,7 @@ export function ModifiersDialog({ isOpen, onClose, menuItem, currentModifiers, o
               {getPriceAdjustment() > 0 && (
                 <div className="flex items-center gap-2">
                   <Zap className="h-4 w-4 text-amber-500" />
-                  <span className="font-semibold">Auto-adds GST: +₹{(menuItem.price * parseFloat(menuItem.gstRate) / 100).toFixed(2)}</span>
+                  <span className="font-semibold text-black">Auto-adds GST: +₹{(menuItem.price * parseFloat(menuItem.gstRate) / 100).toFixed(2)}</span>
                 </div>
               )}
             </div>

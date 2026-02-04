@@ -351,13 +351,13 @@ export function CustomerManagement() {
                 <Table>
                   <TableHeader className="bg-amber-50 sticky top-0">
                     <TableRow>
-                      <TableHead className="font-semibold">Customer</TableHead>
-                      <TableHead className="font-semibold">Tier</TableHead>
-                      <TableHead className="font-semibold">Points</TableHead>
-                      <TableHead className="font-semibold">Total Spent</TableHead>
-                      <TableHead className="font-semibold">Visits</TableHead>
-                      <TableHead className="font-semibold">Last Order</TableHead>
-                      <TableHead className="font-semibold text-right">Actions</TableHead>
+                      <TableHead className="font-semibold text-black">Customer</TableHead>
+                      <TableHead className="font-semibold text-black">Tier</TableHead>
+                      <TableHead className="font-semibold text-black">Points</TableHead>
+                      <TableHead className="font-semibold text-black">Total Spent</TableHead>
+                      <TableHead className="font-semibold text-black">Visits</TableHead>
+                      <TableHead className="font-semibold text-black">Last Order</TableHead>
+                      <TableHead className="font-semibold text-right text-black">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -401,7 +401,7 @@ export function CustomerManagement() {
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="font-semibold">
+                          <TableCell className="font-semibold text-black">
                             <IndianRupee className="h-3 w-3 inline text-green-600 mr-1" />
                             ₹{customer.totalSpent.toFixed(2)}
                           </TableCell>
@@ -678,7 +678,7 @@ export function CustomerManagement() {
               <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-gray-600">Customer</span>
-                  <span className="font-semibold">{selectedCustomer.name || selectedCustomer.phone}</span>
+                  <span className="font-semibold text-black">{selectedCustomer.name || selectedCustomer.phone}</span>
                 </div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-gray-600">Available Points</span>

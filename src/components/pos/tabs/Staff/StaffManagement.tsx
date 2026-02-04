@@ -711,11 +711,11 @@ export function StaffManagement() {
                 <Table>
                   <TableHeader className="bg-amber-50 sticky top-0">
                     <TableRow>
-                      <TableHead className="font-semibold">Name</TableHead>
-                      <TableHead className="font-semibold">Role</TableHead>
-                      <TableHead className="font-semibold">Contact</TableHead>
-                      <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Actions</TableHead>
+                      <TableHead className="font-semibold text-black">Name</TableHead>
+                      <TableHead className="font-semibold text-black">Role</TableHead>
+                      <TableHead className="font-semibold text-black">Contact</TableHead>
+                      <TableHead className="font-semibold text-black">Status</TableHead>
+                      <TableHead className="font-semibold text-black">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -820,13 +820,13 @@ export function StaffManagement() {
                 <Table>
                   <TableHeader className="bg-green-50 sticky top-0">
                     <TableRow>
-                      <TableHead className="font-semibold">Staff</TableHead>
-                      <TableHead className="font-semibold">Date</TableHead>
-                      <TableHead className="font-semibold">Clock In</TableHead>
-                      <TableHead className="font-semibold">Clock Out</TableHead>
-                      <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Regular Hrs</TableHead>
-                      <TableHead className="font-semibold">Overtime</TableHead>
+                      <TableHead className="font-semibold text-black">Staff</TableHead>
+                      <TableHead className="font-semibold text-black">Date</TableHead>
+                      <TableHead className="font-semibold text-black">Clock In</TableHead>
+                      <TableHead className="font-semibold text-black">Clock Out</TableHead>
+                      <TableHead className="font-semibold text-black">Status</TableHead>
+                      <TableHead className="font-semibold text-black">Regular Hrs</TableHead>
+                      <TableHead className="font-semibold text-black">Overtime</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -929,14 +929,14 @@ export function StaffManagement() {
                   <Table>
                     <TableHeader className="bg-purple-50 sticky top-0">
                       <TableRow>
-                        <TableHead className="font-semibold">Staff</TableHead>
-                        <TableHead className="font-semibold">Basic Salary</TableHead>
-                        <TableHead className="font-semibold">Hourly Rate</TableHead>
-                        <TableHead className="font-semibold">HRA</TableHead>
-                        <TableHead className="font-semibold">DA</TableHead>
-                        <TableHead className="font-semibold">PF %</TableHead>
-                        <TableHead className="font-semibold">ESI %</TableHead>
-                        <TableHead className="font-semibold">Actions</TableHead>
+                        <TableHead className="font-semibold text-black">Staff</TableHead>
+                        <TableHead className="font-semibold text-black">Basic Salary</TableHead>
+                        <TableHead className="font-semibold text-black">Hourly Rate</TableHead>
+                        <TableHead className="font-semibold text-black">HRA</TableHead>
+                        <TableHead className="font-semibold text-black">DA</TableHead>
+                        <TableHead className="font-semibold text-black">PF %</TableHead>
+                        <TableHead className="font-semibold text-black">ESI %</TableHead>
+                        <TableHead className="font-semibold text-black">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -980,13 +980,13 @@ export function StaffManagement() {
                   <Table>
                     <TableHeader className="bg-indigo-50 sticky top-0">
                       <TableRow>
-                        <TableHead className="font-semibold">Staff</TableHead>
-                        <TableHead className="font-semibold">Period</TableHead>
-                        <TableHead className="font-semibold">Hours</TableHead>
-                        <TableHead className="font-semibold">Gross</TableHead>
-                        <TableHead className="font-semibold">Deductions</TableHead>
-                        <TableHead className="font-semibold">Net Salary</TableHead>
-                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold text-black">Staff</TableHead>
+                        <TableHead className="font-semibold text-black">Period</TableHead>
+                        <TableHead className="font-semibold text-black">Hours</TableHead>
+                        <TableHead className="font-semibold text-black">Gross</TableHead>
+                        <TableHead className="font-semibold text-black">Deductions</TableHead>
+                        <TableHead className="font-semibold text-black">Net Salary</TableHead>
+                        <TableHead className="font-semibold text-black">Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1038,12 +1038,12 @@ export function StaffManagement() {
                 <Table>
                   <TableHeader className="bg-red-50 sticky top-0">
                     <TableRow>
-                      <TableHead className="font-semibold">Staff Member</TableHead>
-                      <TableHead className="font-semibold">Date</TableHead>
-                      <TableHead className="font-semibold">Orders</TableHead>
-                      <TableHead className="font-semibold">Sales</TableHead>
-                      <TableHead className="font-semibold">Avg Order</TableHead>
-                      <TableHead className="font-semibold">Rating</TableHead>
+                      <TableHead className="font-semibold text-black">Staff Member</TableHead>
+                      <TableHead className="font-semibold text-black">Date</TableHead>
+                      <TableHead className="font-semibold text-black">Orders</TableHead>
+                      <TableHead className="font-semibold text-black">Sales</TableHead>
+                      <TableHead className="font-semibold text-black">Avg Order</TableHead>
+                      <TableHead className="font-semibold text-black">Rating</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

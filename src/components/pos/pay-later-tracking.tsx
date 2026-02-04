@@ -466,7 +466,7 @@ export function PayLaterTracking() {
                         <div className="grid grid-cols-3 gap-4 mt-3">
                           <div>
                             <p className="text-xs text-gray-500">Original Amount</p>
-                            <p className="font-semibold">{formatCurrency(due.originalAmount)}</p>
+                            <p className="font-semibold text-black">{formatCurrency(due.originalAmount)}</p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500">Paid</p>
@@ -567,7 +567,7 @@ export function PayLaterTracking() {
             <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
               <div className="flex justify-between mb-2">
                 <span className="text-sm">Original Amount:</span>
-                <span className="font-semibold">{formatCurrency(selectedDue?.originalAmount || 0)}</span>
+                <span className="font-semibold text-black">{formatCurrency(selectedDue?.originalAmount || 0)}</span>
               </div>
               <div className="flex justify-between mb-2">
                 <span className="text-sm">Already Paid:</span>

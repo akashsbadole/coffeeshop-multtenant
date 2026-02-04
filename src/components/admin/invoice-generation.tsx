@@ -361,7 +361,7 @@ export function InvoiceGeneration({ order, onClose }: InvoiceGenerationProps) {
                   <div key={index} className="px-4 py-3 grid grid-cols-8 gap-2 text-sm hover:bg-amber-50 transition-colors">
                     <div className="font-medium">{item.menuItem.name}</div>
                     <div className="text-gray-600">{item.menuItem.hsnCode || 'N/A'}</div>
-                    <div className="font-semibold">{item.quantity}</div>
+                    <div className="font-semibold text-black">{item.quantity}</div>
                     <div>₹{item.price.toFixed(2)}</div>
                     <div>
                       <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">
@@ -380,17 +380,17 @@ export function InvoiceGeneration({ order, onClose }: InvoiceGenerationProps) {
               <div className="space-y-3">
                 <div className="flex justify-between text-base">
                   <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-semibold">₹{order.subtotal.toFixed(2)}</span>
+                  <span className="font-semibold text-black">₹{order.subtotal.toFixed(2)}</span>
                 </div>
                 <Separator />
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm text-green-700">
                     <span>CGST ({((order.totalGst/2)/order.subtotal*100).toFixed(1)}%):</span>
-                    <span className="font-semibold">₹{order.cgst.toFixed(2)}</span>
+                    <span className="font-semibold text-black">₹{order.cgst.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-green-700">
                     <span>SGST ({((order.totalGst/2)/order.subtotal*100).toFixed(1)}%):</span>
-                    <span className="font-semibold">₹{order.sgst.toFixed(2)}</span>
+                    <span className="font-semibold text-black">₹{order.sgst.toFixed(2)}</span>
                   </div>
                 </div>
                 <Separator className="my-3" />

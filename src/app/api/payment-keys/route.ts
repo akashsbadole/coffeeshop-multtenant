@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { getCurrentOrganization } from '@/lib/tenant'
+import { getTenantFromRequest } from '@/lib/tenant'
 
 /**
  * Payment API Keys Management API
@@ -10,9 +10,9 @@ import { getCurrentOrganization } from '@/lib/tenant'
 // GET - Fetch payment API keys
 export async function GET(request: NextRequest) {
   try {
-    const organization = await getCurrentOrganization()
+    const tenant = await getTenantFromRequest(request)
     
-    if (!organization) {
+    if (!tenant) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     }
 
     const keys = await db.paymentApiKey.findMany({
-      where: { organizationId: organization.id },
+      where: { organizationId: tenant.organizationId },
       orderBy: { createdAt: 'desc' }
     })
 
@@ -49,9 +49,9 @@ export async function GET(request: NextRequest) {
 // POST - Add or update payment API key
 export async function POST(request: NextRequest) {
   try {
-    const organization = await getCurrentOrganization()
+    const tenant = await getTenantFromRequest(request)
     
-    if (!organization) {
+    if (!tenant) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     const existing = await db.paymentApiKey.findUnique({
       where: {
         organizationId_provider: {
-          organizationId: organization.id,
+          organizationId: tenant.organizationId,
           provider: provider.toLowerCase()
         }
       }
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       // Create new key
       key = await db.paymentApiKey.create({
         data: {
-          organizationId: organization.id,
+          organizationId: tenant.organizationId,
           provider: provider.toLowerCase(),
           apiKeyId,
           apiKeySecret,
@@ -144,9 +144,9 @@ export async function POST(request: NextRequest) {
 // PUT - Toggle key active status or update settings
 export async function PUT(request: NextRequest) {
   try {
-    const organization = await getCurrentOrganization()
+    const tenant = await getTenantFromRequest(request)
     
-    if (!organization) {
+    if (!tenant) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
@@ -166,7 +166,7 @@ export async function PUT(request: NextRequest) {
     const key = await db.paymentApiKey.findFirst({
       where: {
         id,
-        organizationId: organization.id
+        organizationId: tenant.organizationId
       }
     })
 
@@ -212,9 +212,9 @@ export async function PUT(request: NextRequest) {
 // DELETE - Remove payment API key
 export async function DELETE(request: NextRequest) {
   try {
-    const organization = await getCurrentOrganization()
+    const tenant = await getTenantFromRequest(request)
     
-    if (!organization) {
+    if (!tenant) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
@@ -237,14 +237,14 @@ export async function DELETE(request: NextRequest) {
       deleted = await db.paymentApiKey.delete({
         where: {
           id,
-          organizationId: organization.id
+          organizationId: tenant.organizationId
         }
       })
     } else {
       deleted = await db.paymentApiKey.delete({
         where: {
           organizationId_provider: {
-            organizationId: organization.id,
+            organizationId: tenant.organizationId,
             provider: provider!.toLowerCase()
           }
         }
@@ -267,9 +267,9 @@ export async function DELETE(request: NextRequest) {
 // Test API key connection
 export async function PATCH(request: NextRequest) {
   try {
-    const organization = await getCurrentOrganization()
+    const tenant = await getTenantFromRequest(request)
     
-    if (!organization) {
+    if (!tenant) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
@@ -289,7 +289,7 @@ export async function PATCH(request: NextRequest) {
     const key = await db.paymentApiKey.findFirst({
       where: {
         provider: provider.toLowerCase(),
-        organizationId: organization.id,
+        organizationId: tenant.organizationId,
         isActive: true
       }
     })

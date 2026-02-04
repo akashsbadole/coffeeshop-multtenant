@@ -204,7 +204,7 @@ export function BarcodeScanner() {
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white h-5 w-5" color='#fff' />
                   <Input
                     ref={inputRef}
                     id="barcode"
@@ -216,7 +216,7 @@ export function BarcodeScanner() {
                         lookupBarcode()
                       }
                     }}
-                    className="pl-10 h-14 text-lg font-mono"
+                    className="pl-10 h-14 text-lg font-mono text-white"
                     disabled={isLoading}
                     autoComplete="off"
                   />
@@ -228,12 +228,12 @@ export function BarcodeScanner() {
                 >
                   {isLoading ? (
                     <>
-                      <Search className="h-4 w-4 mr-2 animate-spin" />
+                      <Search className="h-4 w-4 mr-2 animate-spin" color='#fff' />
                       Searching...
                     </>
                   ) : (
                     <>
-                      <Barcode className="h-4 w-4 mr-2" />
+                      <Barcode className="h-4 w-4 mr-2" color='#fff' />
                       Lookup Barcode
                     </>
                   )}
@@ -269,11 +269,11 @@ export function BarcodeScanner() {
                   ) : (
                     <div className="flex items-center gap-3">
                       <div className="bg-red-100 p-2 rounded-lg">
-                        <Barcode className="h-5 w-5 text-red-600" />
+                        <Barcode className="h-5 w-5 text-red-600" color='#000' />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-red-800">Product Not Found</h4>
-                        <p className="text-sm text-red-600">{lastResult.message}</p>
+                        <h4 className="font-semibold text-black">Product Not Found</h4>
+                        <p className="text-sm text-black">{lastResult.message}</p>
                       </div>
                     </div>
                   )}
@@ -296,17 +296,17 @@ export function BarcodeScanner() {
           {/* Quick Actions */}
           <Card className="shadow-lg border-0">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Quick Actions</CardTitle>
+              <CardTitle className="text-lg text-white">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-3">
                 <Button variant="outline" className="h-20">
-                  <QrCode className="h-6 w-6 mb-2" />
-                  <span className="block">Generate QR</span>
+                  <QrCode className="h-6 w-6 mb-2" color='#fff' />
+                  <span className="block text-white">Generate QR</span>
                 </Button>
                 <Button variant="outline" className="h-20">
-                  <Barcode className="h-6 w-6 mb-2" />
-                  <span className="block">Print Barcode</span>
+                  <Barcode className="h-6 w-6 mb-2" color='#fff' />
+                  <span className="block text-white">Print Barcode</span>
                 </Button>
               </div>
             </CardContent>
@@ -335,16 +335,16 @@ export function BarcodeScanner() {
           <Card className="shadow-lg border-0">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center justify-between">
-                <span>Scanned Products</span>
-                <Badge variant="secondary">{scannedProducts.length} items</Badge>
+                <span className='text-white'>Scanned Products</span>
+                <Badge variant="secondary" color='#fff'>{scannedProducts.length} items</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {scannedProducts.length === 0 ? (
                 <div className="text-center py-12">
-                  <Barcode className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900">No products scanned</h3>
-                  <p className="text-gray-500 mt-1">Scan a barcode to add products</p>
+                  <Barcode className="h-16 w-16 mx-auto text-gray-300 mb-4" color='#fff' />
+                  <h3 className="text-lg font-semibold text-white">No products scanned</h3>
+                  <p className="text-white mt-1">Scan a barcode to add products</p>
                 </div>
               ) : (
                 <div className="space-y-3 max-h-125 overflow-y-auto">

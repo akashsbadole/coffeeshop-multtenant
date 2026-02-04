@@ -276,20 +276,20 @@ export function SupplierManagement() {
             <Table>
               <TableHeader className="bg-amber-50 sticky top-0">
                 <TableRow>
-                  <TableHead className="font-semibold">Supplier</TableHead>
-                  <TableHead className="font-semibold">Contact</TableHead>
-                  <TableHead className="font-semibold">GSTIN</TableHead>
-                  <TableHead className="font-semibold">Status</TableHead>
-                  <TableHead className="font-semibold">Preferred</TableHead>
-                  <TableHead className="font-semibold">Added</TableHead>
-                  <TableHead className="font-semibold text-right">Actions</TableHead>
+                  <TableHead className="font-semibold text-black">Supplier</TableHead>
+                  <TableHead className="font-semibold text-black">Contact</TableHead>
+                  <TableHead className="font-semibold text-black">GSTIN</TableHead>
+                  <TableHead className="font-semibold text-black">Status</TableHead>
+                  <TableHead className="font-semibold text-black">Preferred</TableHead>
+                  <TableHead className="font-semibold text-black">Added</TableHead>
+                  <TableHead className="font-semibold text-right text-black">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredSuppliers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-12 text-gray-500">
-                      <Truck className="h-16 w-16 mx-auto mb-4 opacity-20" />
+                      <Truck className="h-16 w-16 mx-auto mb-4 opacity-20" color='#fff' />
                       <p className="font-medium">No suppliers found</p>
                       <p className="text-sm">Add your first supplier to get started</p>
                     </TableCell>

@@ -88,23 +88,23 @@ function ReportsManagement() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Report Filters</CardTitle>
+          <CardTitle className='text-white'>Report Filters</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <CardContent className='text-white'>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-white">
             <div>
-              <label className="text-sm font-medium mb-1 block">Report Type</label>
+              <label className="text-sm font-medium mb-1 block text-white">Report Type</label>
               <Select value={activeReport} onValueChange={setActiveReport}>
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className='text-white'>
+                  <SelectValue className='text-white' />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sales">Sales Report</SelectItem>
-                  <SelectItem value="items">Items Report</SelectItem>
-                  <SelectItem value="inventory">Inventory Report</SelectItem>
-                  <SelectItem value="payments">Payments Report</SelectItem>
-                  <SelectItem value="customers">Customers Report</SelectItem>
-                  <SelectItem value="comprehensive">Comprehensive Report</SelectItem>
+                <SelectContent className='text-white'>
+                  <SelectItem value="sales" className='text-white'>Sales Report</SelectItem>
+                  <SelectItem value="items" className='text-white'>Items Report</SelectItem>
+                  <SelectItem value="inventory" className='text-white'>Inventory Report</SelectItem>
+                  <SelectItem value="payments" className='text-white'>Payments Report</SelectItem>
+                  <SelectItem value="customers" className='text-white'>Customers Report</SelectItem>
+                  <SelectItem value="comprehensive" className='text-white'>Comprehensive Report</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -157,10 +157,10 @@ function ReportsManagement() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="h-5 w-5 text-green-500" />
+                    <DollarSign className="h-5 w-5 text-green-500" color='#fff' />
                     <span className="text-sm text-muted-foreground">Total Revenue</span>
                   </div>
-                  <p className="text-2xl font-bold mt-2">{formatCurrency(reportData.summary.totalRevenue)}</p>
+                  <p className="text-2xl font-bold mt-2 text-white">{formatCurrency(reportData.summary.totalRevenue)}</p>
                 </CardContent>
               </Card>
             )}
@@ -168,10 +168,10 @@ function ReportsManagement() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2">
-                    <ShoppingCart className="h-5 w-5 text-blue-500" />
+                    <ShoppingCart className="h-5 w-5 text-blue-500" color='#fff' />
                     <span className="text-sm text-muted-foreground">Total Orders</span>
                   </div>
-                  <p className="text-2xl font-bold mt-2">{reportData.summary.totalOrders}</p>
+                  <p className="text-2xl font-bold mt-2 text-white">{reportData.summary.totalOrders}</p>
                 </CardContent>
               </Card>
             )}
@@ -179,10 +179,10 @@ function ReportsManagement() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-purple-500" />
+                    <Users className="h-5 w-5 text-purple-500" color='#fff' />
                     <span className="text-sm text-muted-foreground">Customers</span>
                   </div>
-                  <p className="text-2xl font-bold mt-2">{reportData.summary.totalCustomers}</p>
+                  <p className="text-2xl font-bold mt-2 text-white">{reportData.summary.totalCustomers}</p>
                 </CardContent>
               </Card>
             )}
@@ -190,10 +190,10 @@ function ReportsManagement() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-orange-500" />
+                    <TrendingUp className="h-5 w-5 text-orange-500" color='#fff' />
                     <span className="text-sm text-muted-foreground">Avg Order Value</span>
                   </div>
-                  <p className="text-2xl font-bold mt-2">{formatCurrency(reportData.summary.averageOrderValue)}</p>
+                  <p className="text-2xl font-bold mt-2 text-white">{formatCurrency(reportData.summary.averageOrderValue)}</p>
                 </CardContent>
               </Card>
             )}
@@ -201,10 +201,10 @@ function ReportsManagement() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5 text-indigo-500" />
+                    <CreditCard className="h-5 w-5 text-indigo-500" color='#fff' />
                     <span className="text-sm text-muted-foreground">Total Amount</span>
                   </div>
-                  <p className="text-2xl font-bold mt-2">{formatCurrency(reportData.summary.totalAmount)}</p>
+                  <p className="text-2xl font-bold mt-2 text-white">{formatCurrency(reportData.summary.totalAmount)}</p>
                 </CardContent>
               </Card>
             )}
@@ -215,13 +215,13 @@ function ReportsManagement() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2">
                   {reportData.growth.trend === 'increasing' ? (
-                    <TrendingUp className="h-5 w-5 text-green-500" />
+                    <TrendingUp className="h-5 w-5 text-green-500" color='#fff' />
                   ) : (
-                    <TrendingDown className="h-5 w-5 text-red-500" />
+                    <TrendingDown className="h-5 w-5 text-red-500" color='#fff' />
                   )}
                   <span className="text-sm text-muted-foreground">Growth Trend</span>
                 </div>
-                <p className="text-2xl font-bold mt-2">{reportData.growth.growth}</p>
+                <p className="text-2xl font-bold mt-2 text-white">{reportData.growth.growth}</p>
                 <p className="text-sm text-muted-foreground">{reportData.growth.period}</p>
               </CardContent>
             </Card>

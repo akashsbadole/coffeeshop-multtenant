@@ -500,7 +500,7 @@ export function LiveChatSupport({ userId, userName, userEmail, userRole = 'CUSTO
             <Headphones className="h-4 w-4 text-white" />
           </div>
           <div>
-            <CardTitle className="text-sm font-semibold">Live Support</CardTitle>
+            <CardTitle className="text-sm font-semibold text-white">Live Support</CardTitle>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               <span className="text-xs text-gray-500">
@@ -537,13 +537,13 @@ export function LiveChatSupport({ userId, userName, userEmail, userRole = 'CUSTO
               <CardContent className="p-4 flex-1 flex flex-col overflow-hidden">
                 {/* Toolbar */}
                 <div className="flex items-center justify-between mb-4 shrink-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-white">
                     <Select value={filterStatus} onValueChange={setFilterStatus}>
-                      <SelectTrigger className="w-[140px] h-8 text-xs">
+                      <SelectTrigger className="w-[140px] h-8 text-xs bg-white">
                         <Filter className="w-3 h-3 mr-1" />
                         <SelectValue placeholder="Filter by status" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className='bg-white hover:bg-black'>
                         <SelectItem value="all">All Tickets</SelectItem>
                         <SelectItem value="OPEN">Open</SelectItem>
                         <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
@@ -625,7 +625,7 @@ export function LiveChatSupport({ userId, userName, userEmail, userRole = 'CUSTO
                   <ChevronLeft className="w-4 h-4 mr-1" />
                   Back
                 </Button>
-                <h3 className="font-semibold">Create New Ticket</h3>
+                <h3 className="font-semibold text-white">Create New Ticket</h3>
               </div>
 
               <ScrollArea className="flex-1 -mx-4 px-4">
@@ -640,12 +640,12 @@ export function LiveChatSupport({ userId, userName, userEmail, userRole = 'CUSTO
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-1.5 block">Priority</label>
+                    <label className="text-sm font-medium mb-1.5 block text-white">Priority</label>
                     <Select value={newTicketPriority} onValueChange={(v: any) => setNewTicketPriority(v)}>
-                      <SelectTrigger>
+                      <SelectTrigger className='bg-white'>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className='bg-white'>
                         <SelectItem value="LOW">Low</SelectItem>
                         <SelectItem value="MEDIUM">Medium</SelectItem>
                         <SelectItem value="HIGH">High</SelectItem>
