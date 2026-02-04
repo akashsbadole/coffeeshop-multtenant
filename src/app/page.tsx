@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner'
 import { MenuManagement } from '@/components/admin/menu-management'
 import { InventoryManagement } from '@/components/admin/inventory-management'
+import { ModeToggle } from '@/components/mode-toggle'
+import { LowStockBadge } from '@/components/pos/low-stock-alerts'
 import { Tables } from '@/components/pos/tabs/Tables/Tables'
 import { KDS } from '@/components/pos/tabs/KDS/KDS'
 import { ProductVariants } from '@/components/pos/tabs/Variants/Variants'
@@ -20,6 +22,17 @@ import { BarcodeScanner } from '@/components/pos/tabs/Barcode/BarcodeScanner'
 import { Returns } from '@/components/pos/tabs/Returns/Returns'
 import { POSInventory } from '@/components/pos/tabs/Inventory/Inventory'
 import { Settings } from '@/components/pos/tabs/Settings/Settings'
+import { StaffManagement } from '@/components/pos/tabs/Staff/StaffManagement'
+// import { CustomerManagement } from '@/components/pos/tabs/Loyalty/LoyaltyManagement'
+import { DiscountManagement } from '@/components/pos/tabs/Discounts/DiscountManagement'
+import { SupplierManagement } from '@/components/pos/tabs/Suppliers/SupplierManagement'
+import { PurchaseOrderManagement } from '@/components/pos/tabs/PurchaseOrders/PurchaseOrderManagement'
+import { AnnouncementManagement } from '@/components/pos/tabs/Announcements/AnnouncementManagement'
+import ReportsManagement from '@/components/admin/reports-management'
+import OnboardingModal from '@/components/pos/tabs/Settings/OnboardingModal'
+import { LiveChatSupport } from '@/components/pos/live-chat-support'
+import { PWAManager, OfflineIndicator } from '@/components/pwa-manager'
+import { POSCalculator } from '@/components/pos/calculator'
 import {
   ShoppingCart,
   Search,
@@ -63,7 +76,9 @@ import {
   RotateCcw,
   Wallet,
   Key,
-  Shield
+  Shield,
+  Megaphone,
+  Calculator
 } from 'lucide-react'
 import {
   useAuthStore,
@@ -121,7 +136,10 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
     paymentMethod, setPaymentMethod,
     customerPhone, setCustomerPhone,
     customerName, setCustomerName,
-    notes, setNotes
+    notes, setNotes,
+    upiId, setUpiId,
+    upiQrCode, setUpiQrCode,
+    generateUpiQrCode
   } = useCheckoutStore()
 
   // UI Store
@@ -206,6 +224,12 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
     passwordLoading, setPasswordLoading
   } = useProfileStore()
 
+  // Onboarding Store state
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
+
+  // Calculator sidebar state
+  const [showCalculator, setShowCalculator] = useState(false)
+
   // Cart Store computed values (using selector functions)
   const subtotal = useCartStore(selectSubtotal)
   const totalGst = useCartStore(selectTotalGst)
@@ -215,7 +239,27 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
   useEffect(() => {
     fetchData()
     fetchPOSConfig()
+    checkOnboarding()
   }, [])
+
+  // Check if onboarding is needed
+  const checkOnboarding = async () => {
+    // Only show onboarding for ADMIN users
+    if (user?.role !== 'ADMIN') return
+    
+    try {
+      const response = await fetch('/api/pos/store-settings')
+      if (response.ok) {
+        const data = await response.json()
+        // Show onboarding if no store name is set or it's the default
+        if (!data.data?.storeName || data.data.storeName === 'Universal POS') {
+          setOnboardingOpen(true)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking store settings:', error)
+    }
+  }
 
   const fetchPOSConfig = async () => {
     try {
@@ -573,8 +617,10 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
     try {
       const orderData = {
+        organizationId: user.organizationId,
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
+        customerEmail: receiptEmail || undefined,
         notes: notes || undefined,
         items: cart.map(item => ({
           menuItemId: item.menuItem.id,
@@ -589,7 +635,9 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
         sgst,
         cgst,
         total,
-        paymentMethod
+        paymentMethod,
+        sendWhatsApp: !!receiptPhone,
+        sendEmail: !!receiptEmail
       }
 
       const response = await fetch('/api/pos/orders', {
@@ -604,20 +652,87 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
         clearCart()
         setCustomerName('')
         setCustomerPhone('')
+        setReceiptEmail('')
         setNotes('')
+        setUpiId('')
+        setUpiQrCode(null)
         setCheckoutOpen(false)
         fetchData()
         toast.success(`Order #${order.orderNumber} - ${formatCurrency(total)}`)
-        
+
+        // Auto-send invoices if requested
+        if (receiptPhone) {
+          try {
+            await handleSendWhatsAppAuto(order, receiptPhone)
+            toast.success('Invoice sent via WhatsApp!')
+          } catch (error) {
+            console.error('Failed to send WhatsApp invoice:', error)
+            toast.error('Failed to send WhatsApp invoice')
+          }
+        }
+
+        if (receiptEmail) {
+          try {
+            await handleSendEmailAuto(order, receiptEmail)
+            toast.success('Invoice sent via Email!')
+          } catch (error) {
+            console.error('Failed to send email invoice:', error)
+            toast.error('Failed to send email invoice')
+          }
+        }
+
         // Show receipt dialog automatically
         setSelectedOrderForReceipt(order)
         setReceiptDialogOpen(true)
       } else {
-        throw new Error('Failed to place order')
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Checkout error:', errorData)
+        toast.error(errorData?.error || errorData?.details || 'Failed to place order')
       }
     } catch (error) {
       console.error('Checkout error:', error)
       toast.error('Failed to place order')
+    }
+  }
+
+  // Auto-send WhatsApp invoice
+  const handleSendWhatsAppAuto = async (order: any, phone: string) => {
+    const response = await fetch('/api/receipts/whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: order.id,
+        phoneNumber: phone,
+        orderData: order,
+        autoSend: true
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to send WhatsApp')
+    }
+
+    const data = await response.json()
+    if (data.data?.whatsappURL) {
+      window.open(data.data.whatsappURL, '_blank')
+    }
+  }
+
+  // Auto-send email invoice
+  const handleSendEmailAuto = async (order: any, email: string) => {
+    const response = await fetch('/api/receipts/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: order.id,
+        email: email,
+        orderData: order,
+        autoSend: true
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to send email')
     }
   }
 
@@ -731,31 +846,31 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
   const getCategoryIcon = (categoryName: string) => {
     const name = categoryName.toLowerCase()
     if (name.includes('coffee') || name.includes('beverage') || name.includes('hot')) {
-      return <Coffee className="h-4 w-4" />
+      return <Coffee className="h-4 w-4" color="#fff" />
     }
     if (name.includes('food') || name.includes('meal') || name.includes('snack')) {
-      return <Utensils className="h-4 w-4" />
+      return <Utensils className="h-4 w-4" color="#fff" />
     }
     if (name.includes('cake') || name.includes('pastry') || name.includes('dessert')) {
-      return <Cake className="h-4 w-4" />
+      return <Cake className="h-4 w-4" color="#fff" />
     }
     if (name.includes('ice') || name.includes('cool') || name.includes('cold')) {
-      return <IceCream2 className="h-4 w-4" />
+      return <IceCream2 className="h-4 w-4" color="#fff" />
     }
-    return <Utensils className="h-4 w-4" />
+    return <Utensils className="h-4 w-4" color="#fff" />
   }
 
   // Get payment method icon
   const getPaymentIcon = (method: string) => {
     switch (method) {
       case 'CASH':
-        return <Banknote className="h-4 w-4 text-green-600" />
+        return <Banknote className="h-4 w-4 text-green-600 hover:text-black" />
       case 'UPI':
-        return <Smartphone className="h-4 w-4 text-purple-600" />
+        return <Smartphone className="h-4 w-4 text-purple-600 hover:text-black" />
       case 'CARD':
-        return <CreditCard className="h-4 w-4 text-blue-600" />
+        return <CreditCard className="h-4 w-4 text-blue-600 hover:text-black" />
       default:
-        return <CreditCard className="h-4 w-4" />
+        return <CreditCard className="h-4 w-4 hover:text-black" />
     }
   }
 
@@ -807,6 +922,14 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 </div>
               </div>
 
+              {/* Low Stock Alerts */}
+              <LowStockBadge />
+
+              {/* Dark Mode Toggle
+              <div className="bg-white/20 rounded-lg">
+                <ModeToggle />
+              </div> */}
+
               {/* Logout Button */}
               <Button
                 variant="ghost"
@@ -824,7 +947,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
       <main className="flex-1 container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-          <TabsList className="grid w-full grid-cols-5 lg:grid-cols-10 gap-1 mb-2 bg-white shadow-lg p-2 rounded-xl border-amber-200">
+          <TabsList className="grid w-full grid-cols-8 lg:grid-cols-8 gap-4 mb-2 bg-white shadow-lg p-2 rounded-xl border-amber-200">
             <TabsTrigger value="pos" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
               <ShoppingCart className="h-4 w-4 mr-2" />
               POS
@@ -867,14 +990,42 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 Menu
               </TabsTrigger>
             )}
-            {/* Staff Tab - Admin only */}
+            {posConfig?.features.loyaltyProgram && (
+              <TabsTrigger value="loyalty" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-pink-500 data-[state=active]:to-pink-600 data-[state=active]:text-white">
+                <Shield className="h-4 w-4 mr-2" />
+                Loyalty
+              </TabsTrigger>
+            )}
+            {posConfig?.features.loyaltyProgram && (
+              <TabsTrigger value="discounts" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
+                <Tag className="h-4 w-4 mr-2" />
+                Discounts
+              </TabsTrigger>
+            )}
             {user.role === 'ADMIN' && (
               <TabsTrigger value="staff" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white">
                 <Users className="h-4 w-4 mr-2" />
                 Staff
               </TabsTrigger>
             )}
-            {/* Settings Tab - Admin only */}
+            {user.role === 'ADMIN' && (
+              <TabsTrigger value="suppliers" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-teal-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
+                <Store className="h-4 w-4 mr-2" />
+                Suppliers
+              </TabsTrigger>
+            )}
+            {user.role === 'ADMIN' && (
+              <TabsTrigger value="purchase-orders" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Purchase Orders
+              </TabsTrigger>
+            )}
+            {user.role === 'ADMIN' && (
+              <TabsTrigger value="announcements" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-pink-500 data-[state=active]:to-pink-600 data-[state=active]:text-white">
+                <Megaphone className="h-4 w-4 mr-2" />
+                Announcements
+              </TabsTrigger>
+            )}
             {user.role === 'ADMIN' && (
               <TabsTrigger value="settings" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
                 <SettingsIcon className="h-4 w-4 mr-2" />
@@ -889,7 +1040,6 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
             )}
             {posConfig?.features.giftCards && (
               <TabsTrigger value="giftcards" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-pink-500 data-[state=active]:to-pink-600 data-[state=active]:text-white">
-                {/* <Card className="h-4 w-4 mr-2" /> */}
                 Gift Cards
               </TabsTrigger>
             )}
@@ -915,17 +1065,64 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
           {/* POS Tab */}
           <TabsContent value="pos" className="mt-0 h-full">
-            <div className="flex h-full">
-              {/* Left side - Menu/Categories */}
-              <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                {/* Category Filter */}
-                <div className="flex gap-2 overflow-x-auto py-2">
+            <div className="flex h-full gap-4 relative">
+              {/* Floating Calculator Button - Left Side */}
+              <div className="fixed left-0 top-1/2 transform -translate-y-1/2 z-50 text-white">
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={() => setShowCalculator(!showCalculator)}
+                  className={`h-12 w-8 rounded-l-lg rounded-r-none shadow-lg text-white ${
+                    showCalculator
+                      ? 'bg-red-500 hover:bg-red-600'
+                      : 'bg-gray-700 hover:bg-gray-600 '
+                  }`}
+                  title="Calculator"
+                >
+                  <Calculator className="h-4 w-4" color="#fff" />
+                </Button>
+              </div>
+
+              {/* Calculator Modal */}
+              {showCalculator && (
+                <div className="fixed inset-0 z-[60] flex items-start justify-start pt-20 pl-4">
+                  <div
+                    className="absolute inset-0 bg-black/50"
+                    onClick={() => setShowCalculator(false)}
+                  />
+                  <div className="relative w-80">
+                    <POSCalculator position="left" onInsertAmount={(amount) => {
+                      if (amount > 0) {
+                        useCartStore.getState().addCustomAmount(amount, 'Calculator Amount')
+                      }
+                      setShowCalculator(false)
+                    }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Main Content Area */}
+              <div className="flex-1 flex flex-col gap-4 min-w-0 pl-2">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Input
+                    type="text"
+                    placeholder="Search menu items by name or description..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-12 h-12 bg-white shadow-sm border-amber-200 focus:border-amber-400 text-base"
+                  />
+                </div>
+
+                {/* Category Buttons */}
+                <div className="overflow-x-auto pb-2 flex flex-row text-black hover:text-black">
                   <Button
                     key="all"
                     variant={selectedCategory === 'all' ? 'default' : 'outline'}
                     onClick={() => setSelectedCategory('all')}
                     className={selectedCategory === 'all'
-                      ? 'bg-linear-to-br from-amber-500 to-orange-600 text-white shadow-lg shrink-0'
+                      ? 'bg-linear-to-br from-amber-500 to-orange-600 text-black shadow-lg shrink-0'
                       : 'bg-white hover:bg-amber-50 border-amber-200 shrink-0'
                     }
                   >
@@ -948,18 +1145,6 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   ))}
                 </div>
 
-                {/* Search Bar */}
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <Input
-                    type="text"
-                    placeholder="Search menu items by name or description..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-12 bg-white shadow-sm border-amber-200 focus:border-amber-400 text-base"
-                  />
-                </div>
-
                 {/* Menu Items Grid */}
                 <ScrollArea className="flex-1 pr-4 h-full overflow-y-auto">
                   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2 overflow-y-auto pb-4">
@@ -970,11 +1155,11 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                         onClick={() => addToCart(item)}
                       >
                         <CardHeader className="p-4 pb-2 bg-linear-to-br from-amber-50 to-orange-50 group-hover:from-amber-100 group-hover:to-orange-100 transition-colors">
-                          <CardTitle className="text-base font-semibold line-clamp-1">
+                          <CardTitle className="text-base font-semibold line-clamp-1 text-black">
                             {item.name}
                           </CardTitle>
                           {item.description && (
-                            <p className="text-xs text-gray-500 line-clamp-2">
+                            <p className="text-xs text-black line-clamp-2">
                               {item.description}
                             </p>
                           )}
@@ -989,17 +1174,17 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                                 GST {item.gstRate}%
                               </Badge>
                             </div>
-                            </div>
-                            <div className="bg-linear-to-br from-amber-500 to-orange-600 p-2 rounded-lg shadow-lg group-hover:shadow-xl transition-all mt-1">
-                              <Plus className="h-5 w-5 text-white text-center" />
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                          </div>
+                          <div className="bg-linear-to-br from-amber-500 to-orange-600 p-2 rounded-lg shadow-lg group-hover:shadow-xl transition-all mt-1">
+                            <Plus className="h-5 w-5 text-white text-center" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
 
                   {filteredItems.length === 0 && (
-                    <div className="text-center py-16 text-gray-500">
+                    <div className="text-center py-16 text-white">
                       <Coffee className="h-20 w-20 mx-auto mb-4 opacity-20" />
                       <p className="font-medium text-lg">No items found</p>
                       <p className="text-sm">Try adjusting your search or category filter</p>
@@ -1009,7 +1194,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               </div>
 
               {/* Right side - Sticky Order Panel */}
-              <div className="w-80 sticky top-0 h-screen flex flex-col bg-white border-l shadow-xl">
+              <div className="w-80 sticky top-0 h-screen flex flex-col bg-white border-l shadow-xl shrink-0">
                 {/* Order Summary Header */}
                 <div className="bg-linear-to-br from-amber-500 to-orange-600 text-white p-4">
                   <div className="flex items-center justify-between">
@@ -1032,7 +1217,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                       <div className="bg-linear-to-br from-amber-100 to-orange-100 p-6 rounded-full mb-4">
                         <ShoppingCart className="h-6 w-6 text-amber-400" />
                       </div>
-                      <p className="font-medium">Your cart is empty</p>
+                      <p className="font-medium text-white">Your cart is empty</p>
                       <p className="text-sm">Add delicious items from menu</p>
                     </div>
                   ) : (
@@ -1047,7 +1232,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                               <h4 className="font-semibold text-gray-900 line-clamp-1">
                                 {item.menuItem.name}
                               </h4>
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-white mt-1">
                                 {formatCurrency(item.menuItem.price)} each
                               </p>
                             </div>
@@ -1159,7 +1344,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 )}
               </div>
             </div>
-          </TabsContent>
+            </TabsContent>
 
           {/* Orders Tab */}
           <TabsContent value="orders">
@@ -1174,33 +1359,33 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="rounded-lg border border-amber-200 overflow-hidden">
+                <div className="rounded-lg border border-amber-200 text-black overflow-hidden">
                   <Table>
                     <TableHeader className="bg-linear-to-br from-amber-50 to-orange-50">
                       <TableRow>
-                        <TableHead className="font-semibold">Order #</TableHead>
-                        <TableHead className="font-semibold">Date</TableHead>
-                        <TableHead className="font-semibold">Items</TableHead>
-                        <TableHead className="font-semibold">Payment</TableHead>
-                        <TableHead className="font-semibold text-right">Amount</TableHead>
-                        <TableHead className="font-semibold">Status</TableHead>
-                        <TableHead className="font-semibold text-center">Actions</TableHead>
+                        <TableHead className="font-semibold text-black">Order #</TableHead>
+                        <TableHead className="font-semibold text-black">Date</TableHead>
+                        <TableHead className="font-semibold text-black">Items</TableHead>
+                        <TableHead className="font-semibold text-black">Payment</TableHead>
+                        <TableHead className="font-semibold text-black text-right">Amount</TableHead>
+                        <TableHead className="font-semibold text-black">Status</TableHead>
+                        <TableHead className="font-semibold text-black text-center">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {orders.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="text-center py-12 text-gray-500">
-                            <Receipt className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                            <p className="font-medium">No orders yet</p>
-                            <p className="text-sm">Start taking orders to see them here</p>
+                          <TableCell colSpan={7} className="text-center py-12 text-white">
+                            <Receipt className="h-16 w-16 mx-auto mb-4 opacity-20" color='#fff' />
+                            <p className="font-medium text-white">No orders yet</p>
+                            <p className="text-sm text-white">Start taking orders to see them here</p>
                           </TableCell>
                         </TableRow>
                       ) : (
                         <>
                           {orders.map((order) => (
                             <TableRow key={order.id} className="hover:bg-amber-50/50 transition-colors">
-                              <TableCell className="font-medium">
+                              <TableCell className="font-medium text-white">
                                 <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-200">
                                   #{order.orderNumber}
                                 </Badge>
@@ -1329,7 +1514,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
               {aiInsightsLoading ? (
                 <Card>
-                  <CardContent className="p-12 text-center text-gray-500">
+                  <CardContent className="p-12 text-center text-white">
                     <Brain className="h-16 w-16 mx-auto mb-4 animate-pulse" />
                     <p className="text-lg font-medium">Analyzing your business data...</p>
                     <p className="text-sm mt-2">AI is generating insights</p>
@@ -1417,12 +1602,12 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                               </div>
                               <div>
                                 <p className="font-semibold text-gray-900">{item.name}</p>
-                                <p className="text-sm text-gray-500">{item.quantity} items sold</p>
+                                <p className="text-sm text-white">{item.quantity} items sold</p>
                               </div>
                             </div>
                             <div className="text-right">
                               <p className="font-bold text-lg text-purple-600">₹{item.revenue.toFixed(2)}</p>
-                              <p className="text-xs text-gray-500">Total revenue</p>
+                              <p className="text-xs text-white">Total revenue</p>
                             </div>
                           </div>
                         ))}
@@ -1432,7 +1617,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 </>
               ) : (
                 <Card>
-                  <CardContent className="p-12 text-center text-gray-500">
+                  <CardContent className="p-12 text-center text-white">
                     <Brain className="h-16 w-16 mx-auto mb-4 opacity-20" />
                     <p className="text-lg font-medium">No insights available</p>
                     <p className="text-sm mt-2">Generate some orders to see AI-powered insights</p>
@@ -1442,137 +1627,10 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
             </div>
           </TabsContent>
 
-          {/* Reports Tab */}
-          <TabsContent value="reports">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-linear-to-br from-green-500 to-green-600 text-white p-4">
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-6 w-6" />
-                    Today's Revenue
-                  </CardTitle>
-                  <CardDescription className="text-green-100">
-                    Daily sales summary
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-6 py-6">
-                    <div className="flex-1 flex flex-col items-center">
-                      <div className="bg-green-100 p-4 rounded-xl">
-                        <IndianRupee className="h-6 w-6 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-[12px] text-gray-600 text-center">Today's Revenue</p>
-                        <p className="text-2xl font-bold text-center">₹{todayRevenue.toFixed(0)}</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 flex flex-col items-center">
-                      <div className="bg-green-100 p-4 rounded-xl">
-                        <Receipt className="h-6 w-6 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-[12px] text-gray-600 text-center">Today's Orders</p>
-                        <p className="text-2xl font-bold text-center">{todayOrders.length}</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 flex flex-col items-center">
-                      <div className="bg-green-100 p-4 rounded-xl">
-                        <BarChart3 className="h-6 w-6 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-[12px] text-gray-600 text-center">Total Orders</p>
-                        <p className="text-2xl font-bold text-center">{totalOrdersCount}</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-linear-to-br from-purple-500 to-purple-600 text-white p-4">
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-6 w-6" />
-                    Total Revenue
-                  </CardTitle>
-                  <CardDescription className="text-purple-100">
-                    All-time sales data
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-6 py-6">
-                    <div className="flex-1 flex flex-col items-center">
-                      <div className="bg-purple-100 p-4 rounded-xl">
-                        <TrendingUp className="h-6 w-6 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-[12px] text-gray-600 text-center">Total Revenue</p>
-                        <p className="text-2xl font-bold text-center">
-                          ₹{orders.reduce((sum, order) => sum + order.totalAmount, 0).toFixed(0)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex-1 flex flex-col items-center">
-                      <div className="bg-purple-100 p-4 rounded-xl">
-                        <Receipt className="h-6 w-6 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-[12px] text-gray-600 text-center">Total Orders</p>
-                        <p className="text-2xl font-bold text-center">{totalOrdersCount}</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-linear-to-br from-blue-500 to-blue-600 text-white p-4">
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-6 w-6" />
-                    Average Order Value
-                  </CardTitle>
-                  <CardDescription className="text-blue-100">
-                      Average per order
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-6 py-6">
-                    <div className="flex-1 flex flex-col items-center">
-                      <div className="bg-blue-100 p-4 rounded-xl">
-                        <IndianRupee className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="text-[12px] text-gray-600 text-center">Avg Order Value</p>
-                        <p className="text-2xl font-bold text-center">
-                          {totalOrdersCount > 0
-                            ? `₹${(orders.reduce((sum, order) => sum + order.totalAmount, 0) / totalOrdersCount).toFixed(2)}`
-                            : '₹0'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-0 shadow-lg">
-                <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white p-4">
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-6 w-6" />
-                    Inventory Status
-                  </CardTitle>
-                  <CardDescription className="text-amber-100">
-                    Stock tracking & management
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="text-center py-12 text-gray-500">
-                    <Package className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                    <p className="font-medium text-lg">Inventory coming soon</p>
-                    <p className="text-sm mt-2">Stock tracking will be available in the next update</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+           {/* Reports Tab */}
+            <TabsContent value="reports">
+              <ReportsManagement />
+            </TabsContent>
 
           {/* Inventory Tab */}
           {posConfig?.features.inventory && (
@@ -1588,25 +1646,37 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
           {/* Staff Tab - Admin only */}
           <TabsContent value="staff">
-            <Card className="shadow-xl">
-              <CardHeader className="bg-linear-to-br from-blue-500 to-blue-600 text-white">
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-6 w-6" />
-                  Staff Management
-                </CardTitle>
-                <CardDescription className="text-blue-100">
-                  Manage staff accounts and permissions
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="text-center py-12 text-gray-500">
-                  <Users className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                  <p className="font-medium text-lg">Staff Management</p>
-                  <p className="text-sm mt-2">Staff management features coming soon</p>
-                </div>
-              </CardContent>
-            </Card>
+            <StaffManagement />
           </TabsContent>
+
+          {/* Suppliers Tab - Admin only */}
+          <TabsContent value="suppliers">
+            <SupplierManagement />
+          </TabsContent>
+
+          {/* Purchase Orders Tab - Admin only */}
+          <TabsContent value="purchase-orders">
+            <PurchaseOrderManagement />
+          </TabsContent>
+
+          {/* Announcements Tab - Admin only */}
+          <TabsContent value="announcements">
+            <AnnouncementManagement />
+          </TabsContent>
+
+          {/* Loyalty Tab */}
+          {posConfig?.features.loyaltyProgram && (
+            <TabsContent value="loyalty">
+              {/* <CustomerManagement /> */}
+            </TabsContent>
+          )}
+
+          {/* Discounts Tab */}
+          {posConfig?.features.loyaltyProgram && (
+            <TabsContent value="discounts">
+              <DiscountManagement />
+            </TabsContent>
+          )}
 
           {/* Settings Tab - Admin only */}
           <TabsContent value="settings">
@@ -1774,7 +1844,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
           <div className="p-2 flex-1 overflow-hidden">
             {heldOrders.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-2 text-gray-500 ">
+              <div className="flex flex-col items-center justify-center py-2 text-white ">
                 <Clock className="h-24 w-24 mx-auto mb-4 opacity-20" />
                 <p className="font-medium text-lg">No held orders yet</p>
                 <p className="text-sm mt-2">Use the "Hold" button to save orders for later</p>
@@ -1820,7 +1890,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                             onClick={() => handleDeleteHeldOrder(order.id)}
                             className="hover:bg-red-50 hover:text-red-600"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" color="#fff" />
                           </Button>
                         </div>
                       </div>
@@ -1835,8 +1905,8 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                           {order.items.map((item) => (
                             <div key={item.menuItem.id} className="flex items-center justify-between py-2">
                               <div className="flex-1 flex flex-col">
-                                <span className="font-medium">{item.menuItem.name}</span>
-                                <div className="flex items-center gap-2 text-xs text-gray-500">
+                                <span className="font-medium text-white">{item.menuItem.name}</span>
+                                <div className="flex items-center gap-2 text-xs text-white">
                                   <span>Qty: {item.quantity}</span>
                                   <span>x ₹{item.menuItem.price.toFixed(2)}</span>
                                 </div>
@@ -1968,7 +2038,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 onChange={(e) => setReceiptPhone(e.target.value)}
                 className="text-base"
               />
-              <p className="text-xs text-gray-500 mt-1">Format: +91 followed by 10-digit number</p>
+              <p className="text-xs text-white mt-1">Format: +91 followed by 10-digit number</p>
             </div>
 
             {selectedOrderForReceipt && (
@@ -2071,7 +2141,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 value={profileData.name}
                 onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                 placeholder="Your name"
-                className="h-11"
+                className="h-11 text-white"
               />
             </div>
             <div>
@@ -2081,7 +2151,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 value={profileData.email}
                 onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                 placeholder="your@email.com"
-                className="h-11"
+                className="h-11 text-white"
               />
             </div>
             <div>
@@ -2091,18 +2161,18 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 value={profileData.phone}
                 onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                 placeholder="+91 98765 43210"
-                className="h-11"
+                className="h-11 text-white "
               />
             </div>
             <Separator className="my-4" />
             <div className="bg-blue-50 p-4 rounded-lg">
               <p className="text-sm text-blue-800 flex items-center gap-2">
-                <Shield className="h-4 w-4" />
+                <Shield className="h-4 w-4" color="#fff" />
                 <span>Want to change your password? Use the button below.</span>
               </p>
             </div>
           </div>
-          <DialogFooter className="bg-gray-50 rounded-b-lg -mx-6 -mb-6 px-6 pb-6">
+          <DialogFooter className=" rounded-b-lg -mx-6 -mb-6 px-6 pb-6">
             <div className="flex gap-2 w-full">
               <Button
                 onClick={() => {
@@ -2208,6 +2278,16 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
         </DialogContent>
       </Dialog>
 
+      {/* Onboarding Modal */}
+      <OnboardingModal
+        open={onboardingOpen}
+        onOpenChange={setOnboardingOpen}
+        onComplete={() => {
+          // Refresh data after onboarding is complete
+          fetchPOSConfig()
+        }}
+      />
+
       {/* Checkout Dialog */}
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
         <DialogContent className="max-w-md border-0 shadow-2xl">
@@ -2242,6 +2322,67 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   className="h-10"
                 />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Email (Optional)</label>
+              <Input
+                type="email"
+                placeholder="customer@example.com"
+                value={receiptEmail}
+                onChange={(e) => setReceiptEmail(e.target.value)}
+                className="h-10"
+              />
+            </div>
+
+            {/* Receipt Options */}
+            <div className="bg-amber-50 rounded-lg p-4 space-y-3">
+              <label className="text-sm font-medium text-gray-700 block">Send Invoice (Optional)</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div 
+                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border-2 transition-all ${
+                    receiptPhone ? 'border-green-500 bg-green-500' : 'border-gray-200 hover:border-amber-300'
+                  }`}
+                  onClick={() => {
+                    if (receiptPhone) {
+                      setReceiptPhone('')
+                    }
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!receiptPhone}
+                    onChange={() => {}}
+                    className="h-4 w-4 text-green-600"
+                  />
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-green-600" />
+                    <span className="text-sm font-medium">WhatsApp</span>
+                  </div>
+                </div>
+                <div 
+                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border-2 transition-all ${
+                    receiptEmail ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-amber-300'
+                  }`}
+                  onClick={() => {
+                    if (receiptEmail) {
+                      setReceiptEmail('')
+                    }
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={!!receiptEmail}
+                    onChange={() => {}}
+                    className="h-4 w-4 text-blue-600"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-5 w-5 text-blue-600" />
+                    <span className="text-sm font-medium">Email</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -2304,23 +2445,85 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               </div>
             </div>
 
+            {/* UPI Configuration */}
+            {paymentMethod === 'UPI' && (
+              <div className="bg-purple-50 rounded-lg p-4 space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1 block">Your UPI ID</label>
+                  <Input
+                    placeholder="yourname@upi"
+                    value={upiId}
+                    onChange={(e) => {
+                      setUpiId(e.target.value)
+                      setUpiQrCode(null)
+                    }}
+                    className="h-10"
+                  />
+                  <p className="text-xs text-white mt-1">
+                    Enter your UPI ID (e.g., name@okhdfcbank, name@upi)
+                  </p>
+                </div>
+
+                {upiId && (
+                  <div className="flex flex-col items-center">
+                    <Button
+                      type="button"
+                      onClick={() => generateUpiQrCode(
+                        posConfig?.name || 'Coffee Shop',
+                        total,
+                        `Order Payment`,
+                        undefined
+                      )}
+                      className="bg-purple-600 hover:bg-purple-700 mb-3"
+                    >
+                      Generate QR Code
+                    </Button>
+
+                    {upiQrCode ? (
+                      <div className="bg-white p-4 rounded-lg shadow-md text-center">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Scan to Pay</p>
+                        <img
+                          src={upiQrCode}
+                          alt="UPI QR Code"
+                          className="w-48 h-48 mx-auto"
+                        />
+                        <p className="text-xs text-white mt-2">
+                          Total: ₹{total.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-purple-600 mt-1">
+                          UPI ID: {upiId}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-100 p-8 rounded-lg text-center">
+                        <Smartphone className="h-12 w-12 mx-auto text-gray-400 mb-2" />
+                        <p className="text-sm text-white">
+                          Click "Generate QR Code" to display payment QR
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Order Summary */}
             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Items ({cart.length})</span>
-                <span className="font-medium">{cart.length} items</span>
+                <span className="font-medium text-white">{cart.length} items</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium">{formatCurrency(subtotal)}</span>
+                <span className="font-medium text-white">{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm text-green-700">
                 <span>CGST</span>
-                <span className="font-medium">{formatCurrency(cgst)}</span>
+                <span className="font-medium text-white">{formatCurrency(cgst)}</span>
               </div>
               <div className="flex justify-between text-sm text-green-700">
                 <span>SGST</span>
-                <span className="font-medium">{formatCurrency(sgst)}</span>
+                <span className="font-medium text-white">{formatCurrency(sgst)}</span>
               </div>
               <Separator />
               <div className="flex justify-between text-xl font-bold">
@@ -2361,6 +2564,22 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
         </DialogContent>
       </Dialog>
 
+      {/* Live Chat Support Widget */}
+      {user && (
+        <LiveChatSupport 
+          userId={user.id}
+          userName={user.name}
+          userEmail={user.email}
+          userRole={user.role}
+        />
+      )}
+
+      {/* PWA Install Banner & Update Manager */}
+      <PWAManager />
+
+      {/* Offline Indicator */}
+      <OfflineIndicator />
+
       {/* Footer */}
       <footer className="bg-white border-t-2 border-amber-200 mt-auto">
         <div className="container mx-auto px-4 py-4">
@@ -2372,7 +2591,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               <div>
                 <span className="font-semibold">Coffee Shop POS</span>
                 <span className="mx-2">•</span>
-                <span className="text-gray-500">India GST Compliant</span>
+                <span className="text-white">India GST Compliant</span>
               </div>
             </div>
             <div className="flex items-center gap-6 text-xs">
@@ -2397,65 +2616,61 @@ export default function Page() {
     smsLoginData, setSmsLoginData,
     otpSent, setOtpSent,
     otpLoading, setOtpLoading,
-    smsLoginError, setSmsLoginError
+    smsLoginError, setSmsLoginError,
+    login, logout, checkSession, sendOtp, verifyOtp
   } = useAuthStore()
 
   useEffect(() => {
-    // Check for existing user session
-    const checkAuth = async () => {
-      try {
-        const res = await fetch('/api/auth/me')
-        if (res.ok) {
-          const userData = await res.json()
-          setUser(userData)
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    checkAuth()
+    checkSession()
   }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoginError('')
-
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginData)
-      })
-
-      if (res.ok) {
-        const userData = await res.json()
-        setUser(userData)
-        toast.success('Welcome back!')
-      } else {
-        const error = await res.json()
-        setLoginError(error.message || 'Login failed')
-        toast.error('Login failed')
-      }
-    } catch (error) {
-      console.error('Login error:', error)
-      setLoginError('An error occurred')
+    await login()
+    if (loginError) {
       toast.error('Login failed')
+    } else if (user) {
+      toast.success('Welcome back!')
     }
   }
 
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' })
-      // Clear persisted auth state from localStorage
-      localStorage.removeItem('auth-storage')
-      setUser(null)
+      await logout()
       toast.success('Logged out successfully')
+      localStorage.removeItem('auth-storage')
+      sessionStorage.removeItem('pos_session')
+      window.location.reload()
     } catch (error) {
       console.error('Logout error:', error)
       toast.error('Logout failed')
     }
+  }
+
+  const handleSendOTP = async () => {
+    await sendOtp()
+    if (!smsLoginError && otpSent) {
+      toast.success('OTP sent successfully')
+    } else if (smsLoginError) {
+      toast.error('Failed to send OTP')
+    }
+  }
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await verifyOtp()
+    if (!smsLoginError && user) {
+      toast.success('Login successful!')
+    } else if (smsLoginError) {
+      toast.error('Invalid OTP')
+    }
+  }
+
+  const handleResendOTP = () => {
+    setOtpSent(false)
+    setSmsLoginData({ ...smsLoginData, otp: '' })
+    handleSendOTP()
   }
 
   if (loading) {
@@ -2466,75 +2681,10 @@ export default function Page() {
     )
   }
 
-  const handleSendOTP = async () => {
-    setSmsLoginError('')
-    setOtpLoading(true)
-
-    try {
-      const res = await fetch('/api/auth/sms/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: smsLoginData.phone })
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        setOtpSent(true)
-        toast.success(data.message || 'OTP sent successfully')
-        if (data.development) {
-          toast.info(`Development OTP: ${data.development}`)
-        }
-      } else {
-        const error = await res.json()
-        setSmsLoginError(error.error || 'Failed to send OTP')
-        toast.error('Failed to send OTP')
-      }
-    } catch (error) {
-      console.error('OTP send error:', error)
-      setSmsLoginError('An error occurred')
-      toast.error('Failed to send OTP')
-    } finally {
-      setOtpLoading(false)
-    }
-  }
-
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSmsLoginError('')
-
-    try {
-      const res = await fetch('/api/auth/sms/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: smsLoginData.phone, otp: smsLoginData.otp })
-      })
-
-      if (res.ok) {
-        const userData = await res.json()
-        setUser(userData.user)
-        toast.success('Login successful!')
-      } else {
-        const error = await res.json()
-        setSmsLoginError(error.error || 'Invalid OTP')
-        toast.error('Invalid OTP')
-      }
-    } catch (error) {
-      console.error('OTP verify error:', error)
-      setSmsLoginError('An error occurred')
-      toast.error('Verification failed')
-    }
-  }
-
-  const handleResendOTP = () => {
-    setOtpSent(false)
-    setSmsLoginData({ ...smsLoginData, otp: '' })
-    handleSendOTP()
-  }
-
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-orange-50 via-amber-50 to-yellow-50 p-4">
-        <Card className="w-full max-w-md shadow-2xl border-2 border-amber-200 py-0">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-amber-400">
+        <Card className="w-full max-w-md shadow-2xl border-2 border-amber-200 py-0 bg-[#a27d0d]">
           <CardHeader className="bg-linear-to-br from-amber-600 to-orange-600 text-white rounded-t-lg p-8">
             <div className="flex flex-col items-center gap-4">
               <div className="bg-white/20 p-4 rounded-full">
@@ -2552,11 +2702,11 @@ export default function Page() {
             <Tabs value={loginTab} onValueChange={(v) => { setLoginTab(v as 'email' | 'sms'); setLoginError(''); setSmsLoginError('') }}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
+                  <Mail className="h-4 w-4" color="#fff" />
                   Email
                 </TabsTrigger>
                 <TabsTrigger value="sms" className="flex items-center gap-2">
-                  <Smartphone className="h-4 w-4" />
+                  <Smartphone className="h-4 w-4" color="#fff" />
                   SMS OTP
                 </TabsTrigger>
               </TabsList>
@@ -2622,7 +2772,7 @@ export default function Page() {
                           className="h-11"
                           required
                         />
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-white">
                           Enter your phone number to receive an OTP
                         </p>
                       </div>
@@ -2657,7 +2807,7 @@ export default function Page() {
                           required
                           autoFocus
                         />
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-white">
                           Enter the 6-digit code sent to {smsLoginData.phone}
                         </p>
                       </div>
@@ -2693,7 +2843,7 @@ export default function Page() {
                   <p className="text-xs text-gray-600 text-center mb-2">
                     Demo Accounts:
                   </p>
-                  <div className="space-y-1 text-xs text-gray-500">
+                  <div className="space-y-1 text-xs text-white">
                     <p>Admin: admin@coffeeshop.com</p>
                     <p>Manager: manager@coffeeshop.com</p>
                     <p>Cashier: cashier@coffeeshop.com</p>
@@ -2705,7 +2855,7 @@ export default function Page() {
                   <p className="text-xs text-gray-600 text-center mb-2">
                     Test SMS Login:
                   </p>
-                  <div className="space-y-1 text-xs text-gray-500">
+                  <div className="space-y-1 text-xs text-white">
                     <p>Phone: 9876543210</p>
                     <p className="italic">OTP will be shown in a toast for testing</p>
                   </div>

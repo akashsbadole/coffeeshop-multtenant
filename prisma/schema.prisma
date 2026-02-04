@@ -12,6 +12,31 @@ datasource db {
 
 // ==================== Core Enums ====================
 
+// Subscription status
+enum SubscriptionStatus {
+  ACTIVE
+  TRIAL
+  SUSPENDED
+  CANCELLED
+  EXPIRED
+  PENDING
+}
+
+// Subscription billing cycle
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+// Subscription plan types
+enum PlanType {
+  FREE
+  BASIC
+  PROFESSIONAL
+  ENTERPRISE
+}
+
 // User roles for POS system
 enum Role {
   CASHIER
@@ -89,6 +114,29 @@ enum RefundStatus {
   COMPLETED
 }
 
+// Support ticket status
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+// Support ticket priority
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// Message sender type
+enum MessageSender {
+  CUSTOMER
+  AGENT
+  SYSTEM
+}
+
 // Cash drawer status
 enum CashDrawerStatus {
   OPEN
@@ -101,6 +149,30 @@ enum ShiftStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+// Attendance status
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  ON_LEAVE
+}
+
+// Overtime status
+enum OvertimeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Salary payment status
+enum SalaryPaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
 }
 
 // Gift card status
@@ -136,12 +208,125 @@ enum ReturnStatus {
   COMPLETED
 }
 
+// Due amount status
+enum DueStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+  WRITE_OFF
+}
+
+// Due amount priority
+enum DuePriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+// Payment method for due amounts
+enum DuePaymentMethod {
+  CASH
+  UPI
+  CARD
+  NET_BANKING
+  WALLET
+}
+
 // ==================== Core Models ====================
+
+// Organization model for multi-tenancy
+model Organization {
+  id                String   @id @default(cuid())
+  name              String
+  slug              String   @unique
+  email             String   @unique
+  phone             String?
+  logo              String?
+  industry          String?  // "restaurant", "retail", "coffee_shop", etc.
+  gstin             String?
+  address           String?
+  city              String?
+  state             String?
+  pincode           String?
+  country           String   @default("India")
+  timezone          String   @default("Asia/Kolkata")
+  isActive          Boolean  @default(true)
+  maxUsers          Int      @default(5)
+  maxStores         Int      @default(1)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  users             User[]
+  stores            Store[]
+  categories        Category[]
+  subscriptions      TenantSubscription[]
+  paymentApiKeys    PaymentApiKey[]
+
+  @@index([slug])
+  @@index([email])
+  @@index([isActive])
+}
+
+// Subscription plans available for tenants
+model SubscriptionPlan {
+  id                  String       @id @default(cuid())
+  name                String       @unique
+  type                PlanType
+  description         String?
+  price               Float        // Monthly price in INR
+  yearlyPrice         Float?       // Yearly price (optional)
+  currency            String       @default("INR")
+  features            String       // JSON array of features
+  maxUsers            Int          @default(5)
+  maxStores           Int          @default(1)
+  maxOrdersPerMonth   Int?
+  maxMenuItems        Int?
+  maxInventoryItems   Int?
+  supportLevel        String       @default("email")
+  isActive            Boolean      @default(true)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  subscriptions       TenantSubscription[]
+
+  @@index([type])
+  @@index([isActive])
+}
+
+// Tenant subscription tracking
+model TenantSubscription {
+  id                String             @id @default(cuid())
+  organizationId    String
+  planId            String
+  status            SubscriptionStatus @default(TRIAL)
+  billingCycle      BillingCycle       @default(MONTHLY)
+  startDate         DateTime
+  endDate           DateTime?
+  nextBillingDate   DateTime?
+  autoRenew         Boolean            @default(true)
+  paymentMethod     String?            // "stripe", "razorpay", "manual"
+  paymentProvider   String?            // External payment provider reference
+  paymentStatus     String             @default("pending")
+  notes             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  organization      Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan              SubscriptionPlan   @relation(fields: [planId], references: [id])
+
+  @@unique([organizationId, status])
+  @@index([organizationId])
+  @@index([status])
+  @@index([endDate])
+}
 
 // User model for staff management
 model User {
   id              String   @id @default(cuid())
-  email           String   @unique
+  organizationId  String
+  email           String
   name            String
   role            Role     @default(CASHIER)
   password        String
@@ -150,32 +335,127 @@ model User {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  managedStores   Store[]  @relation("StoreManager")
+  userStoreAssignments UserStoreAssignment[]
   orders          Order[]
   shifts          Shift[]
   cashDrawers     CashDrawer[]
   staffPerformance StaffPerformance[]
   refunds         Refund[]
   assignedTables  TableAssignment[] @relation("TableAssigner")
+  reservations    Reservation[]
+  supportTicketsCreated SupportTicket[] @relation("TicketCreator")
+  supportTicketsAssigned SupportTicket[] @relation("TicketAssignee")
+  supportTicketsResolved SupportTicket[] @relation("TicketResolver")
+  quickResponses  QuickResponse[]
+  chatMessages    ChatMessage[]
+  attendance      Attendance[]
+  staffSalary     StaffSalary?
+  salaryPayments  SalaryPayment[]
+  leaveRequests   LeaveRequest[]
+  scheduleAssignments ScheduleAssignment[]
+  notifications   Notification[]
+  expenses        Expense[]
+  staffDocuments  StaffDocument[]
+
+  // Pay Later & Fraud relations
+  signedSignatures DigitalSignature[]
+  fraudAlerts    FraudAlert[]
+  resolvedFraudAlerts FraudAlert[] @relation("FraudResolver")
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@index([email])
+}
+
+// User-Store assignment for multi-store support
+model UserStoreAssignment {
+  id          String   @id @default(cuid())
+  userId      String
+  storeId     String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  store       Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, storeId])
+  @@index([userId])
+  @@index([storeId])
+}
+
+// Multi-store/Location support
+enum StoreStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+}
+
+enum StoreType {
+  FLAGSHIP
+  BRANCH
+  FRANCHISE
+  KIOSK
+}
+
+model Store {
+  id              String      @id @default(cuid())
+  organizationId  String
+  name            String
+  code            String
+  type            StoreType   @default(BRANCH)
+  status          StoreStatus @default(ACTIVE)
+  address         String?
+  city            String?
+  state           String?
+  stateCode       String?
+  pincode         String?
+  country         String      @default("India")
+  phone           String?
+  email           String?
+  gstin           String?
+  latitude        Float?
+  longitude       Float?
+  timezone        String      @default("Asia/Kolkata")
+  currency        String      @default("INR")
+  openingHours    String?     // JSON with daily hours
+  isDefault       Boolean     @default(false)
+  logoUrl         String?
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  settings        StoreSettings?
+  managers        User[]     @relation("StoreManager")
+  userAssignments UserStoreAssignment[]
+  orders          Order[]
+  tables          Table[]
+  inventory       InventoryItem[]
+  cashDrawers     CashDrawer[]
+  shifts          Shift[]
+  staffPerformance StaffPerformance[]
+  suppliers       Supplier[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@index([code])
+  @@index([status])
+  @@index([type])
 }
 
 // Store settings for India-specific compliance
 model StoreSettings {
   id              String   @id @default(cuid())
+  storeId         String?  @unique
   posType         PosType  @default(GENERAL)
   storeName       String   @default("Universal POS")
-  address         String?
-  phone           String?
-  email           String?
-  gstin           String?  // GST Identification Number
-  state           String?
-  stateCode       String?  // 2-letter state code
   bankName        String?
   accountNumber   String?
   ifscCode        String?
   invoicePrefix   String   @default("INV")
   startingInvoice Int      @default(1)
-  currency        String   @default("INR")
-  logoUrl         String?
   enableTableManagement   Boolean @default(false)
   enableKDS             Boolean @default(false)
   enableSizeVariants    Boolean @default(false)
@@ -185,17 +465,23 @@ model StoreSettings {
   enableReturns         Boolean @default(false)
   enableExchanges       Boolean @default(false)
   enableLoyaltyProgram  Boolean @default(false)
+  enableMultiStore      Boolean @default(false)
+  enableDelivery        Boolean @default(false)
+  enableVoiceCommands   Boolean @default(false)
   defaultGstRate       GstRate   @default(EIGHTEEN)
   gstInclusivePricing  Boolean   @default(false)
   footerText           String?
   termsConditions      String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  store           Store?    @relation(fields: [storeId], references: [id])
 }
 
 // Menu categories (Beverages, Food, Snacks, Clothing, Electronics, etc.)
 model Category {
   id            String     @id @default(cuid())
+  organizationId String
   name          String
   description   String?
   displayOrder  Int        @default(0)
@@ -205,12 +491,17 @@ model Category {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @updatedAt
 
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   items         MenuItem[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
 }
 
 // Menu items with pricing and GST
 model MenuItem {
   id              String      @id @default(cuid())
+  organizationId  String
   name            String
   description     String?
   price           Float
@@ -232,6 +523,13 @@ model MenuItem {
   variants        ProductVariant[]  // For Garment POS
   inventoryItems  InventoryItem[]   // For Retail POS
   purchaseOrderItems PurchaseOrderItem[]
+  recommendations InventoryRecommendation[]
+  demandForecasts DemandForecast[]
+  priceOptimizations PriceOptimization[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@index([categoryId])
 }
 
 // Product variants for Garment POS (sizes, colors)
@@ -257,8 +555,9 @@ model ProductVariant {
 // Customer information (optional for walk-in customers)
 model Customer {
   id              String   @id @default(cuid())
+  organizationId  String
   name            String?
-  phone           String?  @unique
+  phone           String?
   email           String?
   address         String?
   loyaltyPoints   Int      @default(0)
@@ -273,6 +572,13 @@ model Customer {
   orders          Order[]
   returns         Return[]
   giftCards       GiftCard[]
+  payLaterDues   PayLater[]
+  fraudAlerts    FraudAlert[]
+  segments        CustomerSegment[]
+
+  @@unique([organizationId, phone])
+  @@index([organizationId])
+  @@index([phone])
 }
 
 // ==================== Food POS Models ====================
@@ -280,6 +586,7 @@ model Customer {
 // Tables for restaurant management
 model Table {
   id              String      @id @default(cuid())
+  storeId         String?
   name            String      // e.g., "Table 1", "Table 2"
   capacity        Int         // Number of seats
   section         String?     // e.g., "Indoor", "Outdoor", "VIP"
@@ -288,10 +595,12 @@ model Table {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
+  store           Store?      @relation(fields: [storeId], references: [id])
   orders          Order[]
   assignments     TableAssignment[]
+  reservations    Reservation[]
 
-  @@unique([name, section])
+  @@unique([storeId, name, section])
 }
 
 // Table assignments for KDS
@@ -327,8 +636,10 @@ model OrderModifier {
 // Main order model
 model Order {
   id              String      @id @default(cuid())
-  orderNumber     String      @unique
+  organizationId  String
+  orderNumber     String
   customerId      String?
+  storeId         String?     // For multi-store support
   status          OrderStatus @default(PENDING)
   type            PosType     @default(GENERAL)
   subtotal        Float
@@ -346,6 +657,7 @@ model Order {
   updatedAt       DateTime    @updatedAt
 
   customer        Customer?   @relation(fields: [customerId], references: [id])
+  store           Store?      @relation(fields: [storeId], references: [id])
   createdBy       User        @relation(fields: [createdById], references: [id])
   items           OrderItem[]
   payments        Payment[]
@@ -353,6 +665,12 @@ model Order {
   table           Table?      @relation(fields: [tableId], references: [id])
   tableAssignment TableAssignment[]
   returns         Return[]
+  fraudAlerts     FraudAlert[]
+  payLaterDues    PayLater[]
+
+  @@unique([organizationId, orderNumber])
+  @@index([organizationId])
+  @@index([orderNumber])
 }
 
 // Individual items in an order
@@ -400,7 +718,8 @@ model Payment {
 // Discount codes and promotions
 model Discount {
   id              String        @id @default(cuid())
-  code            String        @unique
+  organizationId  String
+  code            String
   type            DiscountType
   value           Float         // Percentage value or fixed amount
   minOrderValue   Float         @default(0)
@@ -414,6 +733,9 @@ model Discount {
   status          DiscountStatus @default(ACTIVE)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
 }
 
 // ==================== Returns & Refunds (Garment/Retail POS) ====================
@@ -463,6 +785,7 @@ model Return {
 // Cash drawer management
 model CashDrawer {
   id              String           @id @default(cuid())
+  storeId         String?
   userId          String
   openingBalance  Float            @default(0)
   closingBalance  Float?
@@ -473,6 +796,7 @@ model CashDrawer {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
+  store           Store?           @relation(fields: [storeId], references: [id])
   user            User             @relation(fields: [userId], references: [id])
   transactions    CashTransaction[]
 }
@@ -495,6 +819,7 @@ model CashTransaction {
 // Staff performance tracking
 model StaffPerformance {
   id              String   @id @default(cuid())
+  storeId         String?
   userId          String
   date            DateTime
   ordersProcessed Int      @default(0)
@@ -504,14 +829,130 @@ model StaffPerformance {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  store           Store?   @relation(fields: [storeId], references: [id])
   user            User     @relation(fields: [userId], references: [id])
 
+  @@unique([storeId, userId, date])
+}
+
+// Attendance tracking
+model Attendance {
+  id              String         @id @default(cuid())
+  userId          String
+  date            DateTime       @default(now())
+  clockIn         DateTime?
+  clockOut        DateTime?
+  status          AttendanceStatus @default(PRESENT)
+  regularHours    Float          @default(0)      // Regular hours worked
+  overtimeHours   Float          @default(0)      // Overtime hours
+  overtimeStatus  OvertimeStatus @default(PENDING)
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user            User           @relation(fields: [userId], references: [id])
+
   @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@index([status])
+}
+
+// Staff salary profile
+model StaffSalary {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  basicSalary     Float    @default(0)
+  hourlyRate      Float    @default(0)
+  overtimeRate    Float    @default(0)       // Multiplier or fixed rate
+  da              Float    @default(0)       // Dearness Allowance
+  hra             Float    @default(0)       // House Rent Allowance
+  transportAllowance Float @default(0)
+  medicalAllowance Float   @default(0)
+  otherAllowances Float    @default(0)
+  pfContribution  Float    @default(0)        // PF deduction percentage
+  esiContribution Float   @default(0)        // ESI deduction percentage
+  taxDeduction    Float    @default(0)        // TDS percentage
+  leaveDeductions Float    @default(0)        // Deductions for unpaid leaves
+  effectiveDate   DateTime @default(now())
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id])
+  salaryPayments  SalaryPayment[]
+}
+
+// Salary payment records
+model SalaryPayment {
+  id                String              @id @default(cuid())
+  staffSalaryId     String
+  userId            String
+  periodStart       DateTime
+  periodEnd         DateTime
+  regularHours      Float
+  overtimeHours     Float
+  basicSalary       Float
+  allowances        Float
+  grossSalary       Float
+  deductions        Float
+  netSalary         Float
+  status            SalaryPaymentStatus @default(PENDING)
+  paymentDate       DateTime?
+  paymentMethod     String?            // CASH, BANK_TRANSFER, CHEQUE
+  transactionId     String?
+  remarks           String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  staffSalary       StaffSalary        @relation(fields: [staffSalaryId], references: [id])
+  user              User               @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([periodStart])
+  @@index([status])
+}
+
+// Payment API Keys for customers
+model PaymentApiKey {
+  id              String   @id @default(cuid())
+  organizationId  String
+  provider        String   @default("razorpay")  // razorpay, stripe, paytm, cashfree
+  apiKeyId        String   // Public key identifier
+  apiKeySecret    String   // Secret key (encrypted in production)
+  isActive        Boolean  @default(true)
+  isTestMode      Boolean  @default(true)
+  webhookUrl      String?
+  webhookSecret   String?
+  metadata        String?  // JSON for additional config
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, provider])
+  @@index([organizationId])
+  @@index([provider])
+}
+
+// Shift template for recurring shifts
+model ShiftTemplate {
+  id              String   @id @default(cuid())
+  name            String   // e.g., "Morning Shift", "Night Shift"
+  startTime       String   // HH:MM format
+  endTime         String   // HH:MM format
+  daysOfWeek      String   // JSON array [0,1,2,3,4,5,6] for Mon-Sun
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isActive])
 }
 
 // Shift management
 model Shift {
   id              String      @id @default(cuid())
+  storeId         String?
   userId          String
   name            String
   startTime       DateTime
@@ -527,6 +968,7 @@ model Shift {
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
+  store           Store?      @relation(fields: [storeId], references: [id])
   user            User        @relation(fields: [userId], references: [id])
 }
 
@@ -535,6 +977,7 @@ model Shift {
 // Inventory items for Retail POS
 model InventoryItem {
   id              String   @id @default(cuid())
+  storeId         String?
   menuItemId      String
   quantity        Int      @default(0)
   reorderLevel    Int      @default(10)
@@ -545,12 +988,14 @@ model InventoryItem {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  store           Store?   @relation(fields: [storeId], references: [id])
   menuItem        MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
 }
 
 // Suppliers
 model Supplier {
   id              String   @id @default(cuid())
+  storeId         String?
   name            String
   contactPerson   String?
   phone           String?
@@ -561,6 +1006,7 @@ model Supplier {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  store           Store?   @relation(fields: [storeId], references: [id])
   purchaseOrders  PurchaseOrder[]
 }
 
@@ -635,3 +1081,699 @@ model Announcement {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// ==================== Table Reservations ====================
+
+// Reservation status enum
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  SEATED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+// Table reservations for restaurants
+model Reservation {
+  id              String           @id @default(cuid())
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  partySize       Int
+  date            DateTime
+  time            String
+  status          ReservationStatus @default(PENDING)
+  notes           String?
+  specialRequests String?
+  tableId         String?
+  createdById     String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  table           Table?           @relation(fields: [tableId], references: [id])
+  createdBy       User?            @relation(fields: [createdById], references: [id])
+
+  @@index([date])
+  @@index([status])
+  @@index([tableId])
+}
+
+// ==================== Live Chat Support System ====================
+
+// Support tickets for customer issues
+model SupportTicket {
+  id              String           @id @default(cuid())
+  subject         String
+  description     String?
+  status          TicketStatus     @default(OPEN)
+  priority        TicketPriority   @default(MEDIUM)
+  createdById     String           // User who created the ticket
+  assignedToId    String?          // Support agent assigned
+  resolvedById    String?          // Agent who resolved
+  orderId         String?          // Related order (optional)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+
+  // Relations
+  createdBy       User             @relation("TicketCreator", fields: [createdById], references: [id])
+  assignedTo      User?            @relation("TicketAssignee", fields: [assignedToId], references: [id])
+  resolvedBy      User?            @relation("TicketResolver", fields: [resolvedById], references: [id])
+  messages        ChatMessage[]
+
+  @@index([status])
+  @@index([priority])
+  @@index([createdById])
+  @@index([assignedToId])
+  @@index([createdAt])
+}
+
+// Chat messages within tickets
+model ChatMessage {
+  id              String           @id @default(cuid())
+  ticketId        String
+  senderType      MessageSender
+  senderId        String           // User ID
+  content         String
+  attachments     String?          // JSON array of attachment URLs
+  isRead          Boolean          @default(false)
+  readAt          DateTime?
+  createdAt       DateTime         @default(now())
+
+  // Relations
+  ticket          SupportTicket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender          User             @relation(fields: [senderId], references: [id])
+
+  @@index([ticketId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([isRead])
+}
+
+// Quick response templates for agents
+model QuickResponse {
+  id              String           @id @default(cuid())
+  title           String
+  content         String
+  category        String?          // e.g., "Technical", "Billing", "General"
+  isActive        Boolean          @default(true)
+  createdById     String
+  usageCount      Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  // Relations
+  createdBy       User             @relation(fields: [createdById], references: [id])
+}
+
+// ==================== Pay Later / Due Amount Tracking ====================
+
+// Pay later / due amounts tracking
+model PayLater {
+  id              String      @id @default(cuid())
+  customerId      String
+  customerName    String
+  customerPhone   String
+  orderId         String?     // Link to original order if exists
+  orderNumber     String
+  originalAmount   Float
+  paidAmount      Float       @default(0)
+  dueAmount       Float       // Remaining amount to be paid
+  status          DueStatus   @default(PENDING)
+  priority        DuePriority @default(MEDIUM)
+  dueDate         DateTime
+  paidAt          DateTime?
+  writtenOffAt    DateTime?
+  writeOffReason  String?
+  partialPayments  String?     // JSON array of partial payments
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  customer        Customer?   @relation(fields: [customerId], references: [id])
+  order           Order?      @relation(fields: [orderId], references: [id])
+
+  @@index([customerId])
+  @@index([customerPhone])
+  @@index([orderId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([createdAt])
+}
+
+// Digital signatures for orders
+model DigitalSignature {
+  id              String      @id @default(cuid())
+  signatureData    String      // Base64 encoded signature
+  signedAt        DateTime    @default(now())
+  signedBy        String      // User ID
+  ipAddress       String?
+  deviceInfo      String?     // JSON with device/browser info
+  isValid         Boolean     @default(true)
+
+  // Relations
+  signedByUser    User        @relation(fields: [signedBy], references: [id])
+
+  @@index([signedAt])
+}
+
+// Fraud detection records
+model FraudAlert {
+  id              String           @id @default(cuid())
+  orderId         String?         // Link to order if applicable
+  customerId      String?
+  userId          String?         // User who made the transaction
+  alertType       String           // "PAYMENT_FRAUD", "REFUND_ABUSE", "MULTIPLE_ORDERS", "SUSPICIOUS_ACTIVITY"
+  severity        String           // "LOW", "MEDIUM", "HIGH", "CRITICAL"
+  description     String
+  detectedAt      DateTime         @default(now())
+  resolved        Boolean          @default(false)
+  resolvedBy      String?
+  resolvedAt      DateTime?
+  resolution      String?
+  metadata        String?          // JSON with additional details
+
+  // Relations
+  order           Order?          @relation(fields: [orderId], references: [id])
+  customer        Customer?       @relation(fields: [customerId], references: [id])
+  user            User?            @relation(fields: [userId], references: [id])
+  resolvedByUser  User?            @relation("FraudResolver", fields: [resolvedBy], references: [id])
+
+  @@index([alertType])
+  @@index([severity])
+  @@index([detectedAt])
+  @@index([resolved])
+}
+
+// Customer segments for marketing
+model CustomerSegment {
+  id              String           @id @default(cuid())
+  customerId      String
+  segment         String           // "VIP", "REGULAR", "NEW", "DORMANT", "HIGH_VALUE", "LOYAL"
+  criteria        String           // JSON with segmentation criteria
+  score           Float            // Relevance score for the segment
+  assignedAt      DateTime         @default(now())
+  expiresAt       DateTime?        // When this segment expires
+
+  // Relations
+  customer        Customer         @relation(fields: [customerId], references: [id])
+
+  @@index([customerId])
+  @@index([segment])
+  @@index([expiresAt])
+}
+
+// Inventory optimization recommendations
+model InventoryRecommendation {
+  id              String           @id @default(cuid())
+  menuItemId      String
+  recommendationType String           // "REORDER", "DISCOUNT", "PROMOTION", "REMOVE", "BUNDLE"
+  recommendedQuantity   Int?
+  currentQuantity      Int
+  expectedDemand      Int
+  confidence         Float            // How confident the AI is (0-1)
+  reason            String
+  createdAt         DateTime         @default(now())
+  expiresAt         DateTime?         // When recommendation expires
+  isApplied         Boolean          @default(false)
+
+  // Relations
+  menuItem        MenuItem          @relation(fields: [menuItemId], references: [id])
+
+  @@index([menuItemId])
+  @@index([recommendationType])
+  @@index([createdAt])
+  @@index([isApplied])
+}
+
+// ==================== Voice Commands ====================
+
+enum VoiceCommandStatus {
+  RECOGNIZED
+  PROCESSING
+  COMPLETED
+  FAILED
+  NOT_UNDERSTOOD
+}
+
+model VoiceCommand {
+  id              String            @id @default(cuid())
+  userId          String
+  commandText     String            // Original speech text
+  intent          String?           // "ADD_ITEM", "SEARCH", "COMPLETE_ORDER", etc.
+  parameters      String?           // JSON with extracted parameters
+  response        String?           // System response
+  status          VoiceCommandStatus @default(RECOGNIZED)
+  confidence      Float?            // Speech recognition confidence (0-1)
+  duration        Int?              // Command duration in ms
+  createdAt       DateTime          @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==================== Delivery Tracking ====================
+
+enum DeliveryStatus {
+  PENDING
+  PREPARING
+  OUT_FOR_DELIVERY
+  NEAR_LOCATION
+  DELIVERED
+  CANCELLED
+  FAILED
+}
+
+model Delivery {
+  id              String          @id @default(cuid())
+  orderId         String          @unique
+  customerId      String?
+  deliveryAddress String
+  deliveryLat     Float?
+  deliveryLng     Float?
+  deliveryNotes   String?
+  status          DeliveryStatus @default(PENDING)
+  estimatedTime   Int?            // Estimated delivery time in minutes
+  actualTime      Int?            // Actual delivery time in minutes
+  deliveryPerson  String?         // Delivery person name
+  deliveryPersonPhone String?
+  pickupTime      DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([orderId])
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ==================== Reviews & Sentiment ====================
+
+enum Sentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+  MIXED
+}
+
+model Review {
+  id              String      @id @default(cuid())
+  orderId         String?
+  customerId      String?
+  rating          Int         // 1-5 stars
+  title           String?
+  content         String?
+  sentiment       Sentiment?
+  sentimentScore  Float?      // -1 to 1
+  keywords        String?     // JSON with extracted keywords
+  isVerified      Boolean     @default(true)
+  isPublic        Boolean     @default(true)
+  response        String?     // Admin response
+  respondedAt     DateTime?
+  respondedBy     String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([orderId])
+  @@index([customerId])
+  @@index([rating])
+  @@index([sentiment])
+  @@index([createdAt])
+}
+
+// ==================== AI Forecasting Models ====================
+
+model SalesForecast {
+  id              String      @id @default(cuid())
+  forecastDate    DateTime
+  storeId         String?
+  menuItemId      String?
+  predictedRevenue Float
+  predictedOrders Int
+  confidence      Float       // 0-1
+  factors         String?     // JSON with influencing factors
+  actualRevenue   Float?
+  actualOrders    Int?
+  accuracy        Float?      // Actual vs Predicted accuracy
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([forecastDate])
+  @@index([storeId])
+  @@index([menuItemId])
+  @@index([createdAt])
+}
+
+model DemandForecast {
+  id              String      @id @default(cuid())
+  itemId          String
+  periodStart     DateTime
+  periodEnd       DateTime
+  predictedDemand  Int
+  currentStock    Int
+  recommendation  String?     // "RESTOCK", "REDUCE", "MAINTAIN"
+  confidence      Float
+  seasonalityFactor Float?
+  weatherFactor   Float?
+  eventFactor     String?     // JSON with event-based adjustments
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  menuItem        MenuItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([periodStart])
+  @@index([createdAt])
+}
+
+model RevenueForecast {
+  id              String      @id @default(cuid())
+  forecastDate    DateTime
+  storeId         String?
+  forecastType    String      // "DAILY", "WEEKLY", "MONTHLY", "QUARTERLY"
+  predictedAmount Float
+  lowerBound      Float
+  upperBound      Float
+  trend           String?     // "INCREASING", "DECREASING", "STABLE"
+  factors         String?     // JSON with factors
+  actualAmount    Float?
+  variance        Float?      // Difference between predicted and actual
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([forecastDate])
+  @@index([storeId])
+  @@index([forecastType])
+  @@index([createdAt])
+}
+
+model CustomerChurnPrediction {
+  id              String      @id @default(cuid())
+  customerId      String
+  churnRisk       String      // "LOW", "MEDIUM", "HIGH", "CRITICAL"
+  churnProbability Float      // 0-1
+  lastPurchaseDate DateTime
+  predictedChurnDate DateTime?
+  factors         String?     // JSON with churn factors
+  recommendations  String?     // JSON with retention strategies
+  hasChurned      Boolean     @default(false)
+  actualChurnDate  DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([customerId])
+  @@index([churnRisk])
+  @@index([createdAt])
+}
+
+// ==================== Pricing Optimization ====================
+
+model PriceOptimization {
+  id              String      @id @default(cuid())
+  menuItemId      String
+  currentPrice    Float
+  suggestedPrice  Float
+  priceChange     Float       // Difference in percentage
+  reason          String?     // Why this price is suggested
+  expectedImpact  String?     // JSON with expected impact on demand/revenue
+  confidence      Float
+  appliedAt      DateTime?
+  isActive        Boolean     @default(false)
+  expiresAt       DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  menuItem        MenuItem    @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  @@index([menuItemId])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+// ==================== Seasonality Analysis ====================
+
+model SeasonalityPattern {
+  id              String      @id @default(cuid())
+  itemId          String?
+  period          String      // "HOURLY", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"
+  timeSlot        String      // Specific time slot
+  multiplier      Float       // Demand multiplier
+  confidence      Float
+  sampleSize      Int
+  lastUpdated     DateTime    @default(now())
+  validFrom       DateTime    @default(now())
+  validUntil      DateTime?
+
+  @@index([itemId])
+  @@index([period])
+  @@index([timeSlot])
+}
+
+// ==================== Revenue Anomaly Detection ====================
+
+enum AnomalyType {
+  SPIKE
+  DROP
+  UNUSUAL_PATTERN
+  ZERO_VALUE
+  NEGATIVE_VALUE
+}
+
+enum AnomalySeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model RevenueAnomaly {
+  id              String          @id @default(cuid())
+  anomalyType     AnomalyType
+  severity        AnomalySeverity
+  detectedDate    DateTime
+  metric          String          // "revenue", "orders", "average_order_value"
+  actualValue     Float
+  expectedValue   Float
+  deviation       Float           // Percentage deviation
+  threshold       Float           // Threshold that triggered alert
+  description     String?
+  isResolved      Boolean         @default(false)
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  resolutionNotes String?
+  metadata        String?         // JSON with additional context
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([detectedDate])
+  @@index([anomalyType])
+  @@index([severity])
+  @@index([isResolved])
+  @@index([createdAt])
+}
+
+// ==================== Staff Scheduling ====================
+
+enum LeaveType {
+  CASUAL
+  SICK
+  ANNUAL
+  UNPAID
+  MATERNITY
+  PATERNITY
+  BEREAVEMENT
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model LeaveRequest {
+  id              String       @id @default(cuid())
+  userId          String
+  leaveType       LeaveType
+  startDate       DateTime
+  endDate         DateTime
+  totalDays       Float
+  reason          String
+  status          LeaveStatus  @default(PENDING)
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectionReason  String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user            User         @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([startDate])
+  @@index([status])
+}
+
+model WeeklySchedule {
+  id              String   @id @default(cuid())
+  weekStartDate   DateTime
+  weekEndDate     DateTime
+  notes           String?
+  isPublished     Boolean  @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  assignments     ScheduleAssignment[]
+
+  @@unique([weekStartDate])
+  @@index([weekStartDate])
+}
+
+model ScheduleAssignment {
+  id              String   @id @default(cuid())
+  scheduleId      String
+  userId          String
+  date            DateTime
+  shiftType       String   // "MORNING", "AFTERNOON", "EVENING", "NIGHT"
+  startTime       String   // HH:MM
+  endTime         String   // HH:MM
+  isOffDay        Boolean  @default(false)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  schedule        WeeklySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [id])
+
+  @@index([scheduleId])
+  @@index([userId])
+  @@index([date])
+}
+
+// ==================== Notifications ====================
+
+enum NotificationType {
+  ATTENDANCE
+  LEAVE
+  SCHEDULE
+  PAYMENT
+  SALARY
+  ORDER
+  SYSTEM
+  REMINDER
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Notification {
+  id              String               @id @default(cuid())
+  userId          String
+  type            NotificationType
+  title           String
+  message         String
+  priority        NotificationPriority @default(MEDIUM)
+  isRead          Boolean              @default(false)
+  readAt          DateTime?
+  actionUrl       String?
+  actionLabel     String?
+  metadata        String?              // JSON for additional data
+  expiresAt       DateTime?
+  createdAt       DateTime             @default(now())
+
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// ==================== Expenses ====================
+
+enum ExpenseCategory {
+  INGREDIENTS
+  SUPPLIES
+  EQUIPMENT
+  MAINTENANCE
+  UTILITIES
+  RENT
+  MARKETING
+  TRANSPORT
+  MISCELLANEOUS
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REIMBURSED
+}
+
+model Expense {
+  id              String         @id @default(cuid())
+  userId          String
+  category        ExpenseCategory
+  description     String
+  amount          Float
+  receiptUrl      String?
+  expenseDate     DateTime
+  status          ExpenseStatus  @default(PENDING)
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectionReason  String?
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  user            User           @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([category])
+  @@index([expenseDate])
+  @@index([status])
+}
+
+// ==================== Staff Documents ====================
+
+enum DocumentType {
+  ID_PROOF
+  ADDRESS_PROOF
+  PHOTO
+  RESUME
+  EXPERIENCE_LETTER
+  OFFER_LETTER
+  CONTRACT
+  OTHER
+}
+
+model StaffDocument {
+  id              String        @id @default(cuid())
+  userId          String
+  type            DocumentType
+  fileName        String
+  fileUrl         String
+  fileSize        Int?
+  mimeType        String?
+  description     String?
+  expiryDate      DateTime?
+  isVerified      Boolean       @default(false)
+  verifiedBy      String?
+  verifiedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+}
+

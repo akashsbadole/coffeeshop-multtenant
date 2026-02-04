@@ -24,6 +24,7 @@ export { useLoyaltyStore } from './loyalty'
 export { useDiscountsStore } from './discounts'
 export { useKDSStore } from './kds'
 export { useStaffStore } from './staff'
+export { useTenantStore } from './tenant'
 
 // Re-export all types from types.ts
 export type {
@@ -74,4 +75,18 @@ export type {
   KDSStatusUpdate,
   StaffPerformance,
   StaffPerformanceFilters,
+} from './types'
+
+// Export multi-tenancy types
+export type {
+  Organization,
+  SubscriptionPlan,
+  TenantSubscription,
+  SubscriptionStatus,
+  BillingCycle,
+  PlanType,
+  CreateOrganizationData,
+  UpdateOrganizationData,
+  CreateSubscriptionData,
+  UpdateSubscriptionData,
 } from './types'

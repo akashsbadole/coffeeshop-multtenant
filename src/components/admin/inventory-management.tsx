@@ -305,7 +305,7 @@ export function InventoryManagement() {
                             {/* Low Stock Alert Info */}
                             {item.quantity <= item.lowStockAlert && item.quantity > 0 && (
                               <div className="mt-3 flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-2 rounded-lg text-sm">
-                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTriangle className="h-4 w-4" color="#fff" />
                                 <span>
                                   Low stock alert at <strong>{item.lowStockAlert} {item.unit}</strong>
                                 </span>

@@ -3,6 +3,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -46,7 +48,7 @@
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --foreground: oklch(52.081% 0.00006 271.152);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -114,9 +116,34 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50 text-black;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
+  .text-xs,
+  label {
+    @apply text-white;
+  }
+}
+
+section[aria-label="Notifications alt+T"] {
+  /* examrgb(255, 255, 255) styles */
+  color: rgb(255, 255, 255);
+}
+
+[data-sonner-toast] {
+  color: #fff;
+}
+
+::placeholder {
+  color: #c2c2c2;
+  /* gray-400 */
+}
+
+label,
+p {
+  color: var(--color-white);
 }

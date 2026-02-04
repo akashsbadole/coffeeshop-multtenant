@@ -49,7 +49,7 @@ export async function PUT(
 
       if (orderItem?.variant) {
         await db.productVariant.update({
-          where: { id: orderItem.variantId },
+          where: { id: orderItem.variantId || undefined },
           data: {
             stockQuantity: {
               increment: updatedReturn.quantity
@@ -57,7 +57,7 @@ export async function PUT(
           }
         })
       } else if (orderItem?.menuItemId) {
-        const inventoryItem = await db.inventoryItem.findUnique({
+        const inventoryItem = await db.inventoryItem.findFirst({
           where: { menuItemId: orderItem.menuItemId }
         })
         if (inventoryItem) {

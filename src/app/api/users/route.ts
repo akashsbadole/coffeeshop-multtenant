@@ -3,12 +3,24 @@ import { db } from '@/lib/db'
 
 export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organizationId')
+
+    const where: any = {}
+    
+    if (organizationId) {
+      where.organizationId = organizationId
+    }
+
     const users = await db.user.findMany({
+      where,
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
+        phone: true,
+        isActive: true,
         createdAt: true,
         updatedAt: true
       },
@@ -28,11 +40,17 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { email, name, role, password } = body
+    const { organizationId, email, name, role, password } = body
 
-    // Check if user already exists
-    const existingUser = await db.user.findUnique({
-      where: { email }
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: 'Organization ID is required' },
+        { status: 400 }
+      )
+    }
+
+    const existingUser = await db.user.findFirst({
+      where: { email, organizationId }
     })
 
     if (existingUser) {
@@ -44,10 +62,11 @@ export async function POST(request: Request) {
 
     const user = await db.user.create({
       data: {
+        organizationId,
         email,
         name,
         role,
-        password // In production, hash this password with bcrypt
+        password
       },
       select: {
         id: true,

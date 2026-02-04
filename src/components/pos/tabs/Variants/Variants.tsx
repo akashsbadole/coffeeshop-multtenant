@@ -255,7 +255,7 @@ export function ProductVariants() {
                 <Tag className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{variants.length}</p>
+                <p className="text-2xl font-bold text-white">{variants.length}</p>
                 <p className="text-sm text-gray-500">Total Variants</p>
               </div>
             </div>
@@ -268,7 +268,7 @@ export function ProductVariants() {
                 <Package className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{inStockVariants}</p>
+                <p className="text-2xl font-bold text-white">{inStockVariants}</p>
                 <p className="text-sm text-gray-500">In Stock</p>
               </div>
             </div>
@@ -281,7 +281,7 @@ export function ProductVariants() {
                 <Package className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{outOfStockVariants}</p>
+                <p className="text-2xl font-bold text-white">{outOfStockVariants}</p>
                 <p className="text-sm text-gray-500">Out of Stock</p>
               </div>
             </div>
@@ -294,7 +294,7 @@ export function ProductVariants() {
                 <Package className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{Object.keys(variantsByProduct).length}</p>
+                <p className="text-2xl font-bold text-white">{Object.keys(variantsByProduct).length}</p>
                 <p className="text-sm text-gray-500">Products</p>
               </div>
             </div>
@@ -413,7 +413,7 @@ export function ProductVariants() {
                         size="icon"
                         onClick={() => handleEdit(variant)}
                       >
-                        <Edit2 className="h-4 w-4" />
+                        <Edit2 className="h-4 w-4" color="#fff" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -421,7 +421,7 @@ export function ProductVariants() {
                         onClick={() => handleDelete(variant.id)}
                         className="hover:text-red-500"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" color="#fff" />
                       </Button>
                     </div>
                   </div>

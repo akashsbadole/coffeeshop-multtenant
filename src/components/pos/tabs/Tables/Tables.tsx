@@ -199,7 +199,7 @@ export function Tables() {
                 <Users className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{tables.filter(t => t.status === 'AVAILABLE').length}</p>
+                <p className="text-2xl font-bold text-white">{tables.filter(t => t.status === 'AVAILABLE').length}</p>
                 <p className="text-sm text-gray-500">Available</p>
               </div>
             </div>
@@ -212,7 +212,7 @@ export function Tables() {
                 <Users className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{tables.filter(t => t.status === 'OCCUPIED').length}</p>
+                <p className="text-2xl font-bold text-white">{tables.filter(t => t.status === 'OCCUPIED').length}</p>
                 <p className="text-sm text-gray-500">Occupied</p>
               </div>
             </div>
@@ -225,7 +225,7 @@ export function Tables() {
                 <Users className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{tables.filter(t => t.status === 'RESERVED').length}</p>
+                <p className="text-2xl font-bold text-white">{tables.filter(t => t.status === 'RESERVED').length}</p>
                 <p className="text-sm text-gray-500">Reserved</p>
               </div>
             </div>
@@ -238,7 +238,7 @@ export function Tables() {
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{tables.filter(t => t.status === 'CLEANING').length}</p>
+                <p className="text-2xl font-bold text-white">{tables.filter(t => t.status === 'CLEANING').length}</p>
                 <p className="text-sm text-gray-500">Cleaning</p>
               </div>
             </div>
@@ -303,7 +303,7 @@ export function Tables() {
                             handleEdit(table)
                           }}
                         >
-                          <Edit2 className="h-4 w-4" />
+                          <Edit2 className="h-4 w-4" color="#fff" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -314,7 +314,7 @@ export function Tables() {
                           }}
                           className="hover:text-red-500"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" color="#fff" />
                         </Button>
                       </div>
                     </div>

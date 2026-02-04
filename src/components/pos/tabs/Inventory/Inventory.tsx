@@ -157,7 +157,7 @@ export function POSInventory() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Inventory</h2>
+          <h2 className="text-2xl font-bold text-white">Inventory</h2>
           <p className="text-gray-500">Track stock levels and manage inventory</p>
         </div>
         <div className="flex gap-2">
@@ -177,7 +177,7 @@ export function POSInventory() {
                 <Package className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{filteredInventory.length}</p>
+                <p className="text-2xl font-bold text-white">{filteredInventory.length}</p>
                 <p className="text-sm text-gray-500">Total Items</p>
               </div>
             </div>
@@ -190,7 +190,7 @@ export function POSInventory() {
                 <TrendingUp className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{inStockCount}</p>
+                <p className="text-2xl font-bold text-white">{inStockCount}</p>
                 <p className="text-sm text-gray-500">In Stock</p>
               </div>
             </div>
@@ -203,7 +203,7 @@ export function POSInventory() {
                 <AlertTriangle className="h-5 w-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{lowStockCount}</p>
+                <p className="text-2xl font-bold text-white">{lowStockCount}</p>
                 <p className="text-sm text-gray-500">Low Stock</p>
               </div>
             </div>
@@ -216,7 +216,7 @@ export function POSInventory() {
                 <TrendingDown className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{outOfStockCount}</p>
+                <p className="text-2xl font-bold text-white">{outOfStockCount}</p>
                 <p className="text-sm text-gray-500">Out of Stock</p>
               </div>
             </div>
@@ -252,9 +252,9 @@ export function POSInventory() {
           <ScrollArea className="h-125">
             {filteredInventory.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-                <Package className="h-20 w-20 mb-4 opacity-20" />
-                <p className="font-medium text-lg">No inventory items found</p>
-                <p className="text-sm mt-2">Add products to see inventory here</p>
+                <Package className="h-20 w-20 mb-4 opacity-20" color='#fff'/>
+                <p className="font-medium text-lg text-white">No inventory items found</p>
+                <p className="text-sm mt-2 text-white">Add products to see inventory here</p>
               </div>
             ) : (
               <div className="divide-y divide-amber-100">
@@ -263,13 +263,13 @@ export function POSInventory() {
                   const stockProgress = getStockProgress(item)
 
                   return (
-                    <div key={item.id} className="p-4 hover:bg-amber-50 transition-colors">
+                    <div key={item.id} className="p-4 hover:bg-amber-50 transition-colors text-white">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-start justify-between">
                             <div>
-                              <h4 className="font-semibold text-gray-900">{item.menuItem.name}</h4>
-                              <p className="text-sm text-gray-500 mt-1">
+                              <h4 className="font-semibold text-white">{item.menuItem.name}</h4>
+                              <p className="text-sm text-white mt-1">
                                 {item.menuItem.category.name} • {item.unit || 'Units'}
                               </p>
                             </div>
@@ -332,7 +332,7 @@ export function POSInventory() {
                           {/* Low Stock Alert */}
                           {item.quantity <= item.reorderLevel && item.quantity > 0 && (
                             <div className="mt-3 flex items-center gap-2 text-orange-600 bg-orange-50 px-3 py-2 rounded-lg text-sm">
-                              <AlertTriangle className="h-4 w-4" />
+                              <AlertTriangle className="h-4 w-4" color="#fff" />
                               <span>
                                 Low stock alert at <strong>{item.reorderLevel} {item.unit || 'units'}</strong>
                               </span>

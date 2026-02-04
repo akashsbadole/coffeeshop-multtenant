@@ -4,7 +4,14 @@ import { db } from '@/lib/db'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { data, type } = body
+    const { data, type, organizationId } = body
+
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: 'Organization ID is required' },
+        { status: 400 }
+      )
+    }
 
     if (!data) {
       return NextResponse.json(
@@ -13,59 +20,43 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const organization = await db.organization.findUnique({
+      where: { id: organizationId }
+    })
+
+    if (!organization) {
+      return NextResponse.json(
+        { error: 'Organization not found' },
+        { status: 404 }
+      )
+    }
+
     const results: any = {
       imported: {},
-      errors: []
+      errors: [],
+      organizationId
     }
 
-    // Import Users
-    if (type === 'all' || type === 'users') {
-      if (data.users && Array.isArray(data.users)) {
-        let importedCount = 0
-        for (const user of data.users) {
-          try {
-            // Check if user already exists by email
-            const existingUser = await db.user.findUnique({
-              where: { email: user.email }
-            })
-
-            if (!existingUser) {
-              await db.user.create({
-                data: {
-                  name: user.name,
-                  email: user.email,
-                  password: user.password || 'coffee123', // Default password
-                  role: user.role || 'CASHIER'
-                }
-              })
-              importedCount++
-            }
-          } catch (error) {
-            results.errors.push({
-              entity: 'user',
-              data: user.email,
-              error: error instanceof Error ? error.message : 'Unknown error'
-            })
-          }
-        }
-        results.imported.users = importedCount
-      }
-    }
-
-    // Import Categories
     if (type === 'all' || type === 'categories') {
       if (data.categories && Array.isArray(data.categories)) {
         let importedCount = 0
         for (const category of data.categories) {
           try {
             const existingCategory = await db.category.findFirst({
-              where: { name: category.name }
+              where: {
+                name: category.name,
+                organizationId
+              }
             })
 
             if (!existingCategory) {
               await db.category.create({
                 data: {
-                  name: category.name
+                  name: category.name,
+                  description: category.description,
+                  displayOrder: category.displayOrder || 0,
+                  isActive: category.isActive !== undefined ? category.isActive : true,
+                  organizationId
                 }
               })
               importedCount++
@@ -82,17 +73,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Import Products (Menu Items)
     if (type === 'all' || type === 'products') {
       if (data.products && Array.isArray(data.products)) {
         let importedCount = 0
         for (const product of data.products) {
           try {
-            // Find or create category
             let categoryId = product.categoryId
             if (!categoryId && product.categoryName) {
               const category = await db.category.findFirst({
-                where: { name: product.categoryName }
+                where: {
+                  name: product.categoryName,
+                  organizationId
+                }
               })
               if (category) {
                 categoryId = category.id
@@ -108,9 +100,11 @@ export async function POST(req: NextRequest) {
               continue
             }
 
-            // Check if product already exists
             const existingProduct = await db.menuItem.findFirst({
-              where: { name: product.name }
+              where: {
+                name: product.name,
+                organizationId
+              }
             })
 
             if (!existingProduct) {
@@ -119,10 +113,11 @@ export async function POST(req: NextRequest) {
                   name: product.name,
                   description: product.description || null,
                   price: parseFloat(product.price),
-                  gstRate: product.gstRate || '5',
+                  gstRate: product.gstRate || 'FIVE',
                   hsnCode: product.hsnCode || null,
                   categoryId: categoryId,
-                  isAvailable: product.isAvailable !== undefined ? product.isAvailable : true
+                  isAvailable: product.isAvailable !== undefined ? product.isAvailable : true,
+                  organizationId
                 }
               })
               importedCount++
@@ -139,69 +134,83 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Import Orders (Note: This is for backup restoration, not for importing new orders)
-    if (type === 'all' || type === 'orders') {
-      if (data.orders && Array.isArray(data.orders)) {
+    if (type === 'all' || type === 'customers') {
+      if (data.customers && Array.isArray(data.customers)) {
         let importedCount = 0
-        for (const order of data.orders) {
+        for (const customer of data.customers) {
           try {
-            // Check if order already exists
-            const existingOrder = await db.order.findFirst({
-              where: { orderNumber: order.orderNumber }
+            const existingCustomer = await db.customer.findFirst({
+              where: {
+                phone: customer.phone,
+                organizationId
+              }
             })
 
-            if (!existingOrder) {
-              // Create order with items
-              const createdOrder = await db.order.create({
+            if (!existingCustomer) {
+              await db.customer.create({
                 data: {
-                  orderNumber: order.orderNumber,
-                  customerName: order.customerName || null,
-                  customerPhone: order.customerPhone || null,
-                  paymentMethod: order.paymentMethod || 'CASH',
-                  status: order.status || 'COMPLETED',
-                  subtotal: parseFloat(order.subtotal) || 0,
-                  cgst: parseFloat(order.cgst) || 0,
-                  sgst: parseFloat(order.sgst) || 0,
-                  totalGst: parseFloat(order.totalGst) || 0,
-                  totalAmount: parseFloat(order.totalAmount) || 0,
-                  notes: order.notes || null
+                  name: customer.name,
+                  phone: customer.phone,
+                  email: customer.email,
+                  address: customer.address,
+                  organizationId
                 }
               })
-
-              // Create order items
-              if (order.items && Array.isArray(order.items)) {
-                for (const item of order.items) {
-                  const menuItem = await db.menuItem.findFirst({
-                    where: { name: item.menuItemName }
-                  })
-
-                  if (menuItem) {
-                    await db.orderItem.create({
-                      data: {
-                        orderId: createdOrder.id,
-                        menuItemId: menuItem.id,
-                        quantity: item.quantity,
-                        price: parseFloat(item.price),
-                        gstRate: item.gstRate,
-                        gstAmount: parseFloat(item.gstAmount),
-                        subtotal: parseFloat(item.subtotal)
-                      }
-                    })
-                  }
-                }
-              }
-
               importedCount++
             }
           } catch (error) {
             results.errors.push({
-              entity: 'order',
-              data: order.orderNumber,
+              entity: 'customer',
+              data: customer.phone,
               error: error instanceof Error ? error.message : 'Unknown error'
             })
           }
         }
-        results.imported.orders = importedCount
+        results.imported.customers = importedCount
+      }
+    }
+
+    if (type === 'all' || type === 'stores') {
+      if (data.stores && Array.isArray(data.stores)) {
+        let importedCount = 0
+        for (const store of data.stores) {
+          try {
+            const existingStore = await db.store.findFirst({
+              where: {
+                code: store.code,
+                organizationId
+              }
+            })
+
+            if (!existingStore) {
+              await db.store.create({
+                data: {
+                  name: store.name,
+                  code: store.code,
+                  type: store.type || 'BRANCH',
+                  status: store.status || 'ACTIVE',
+                  address: store.address,
+                  city: store.city,
+                  state: store.state,
+                  pincode: store.pincode,
+                  country: store.country || 'India',
+                  phone: store.phone,
+                  email: store.email,
+                  gstin: store.gstin,
+                  organizationId
+                }
+              })
+              importedCount++
+            }
+          } catch (error) {
+            results.errors.push({
+              entity: 'store',
+              data: store.name,
+              error: error instanceof Error ? error.message : 'Unknown error'
+            })
+          }
+        }
+        results.imported.stores = importedCount
       }
     }
 

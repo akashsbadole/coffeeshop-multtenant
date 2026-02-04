@@ -10,11 +10,16 @@ import { db } from '@/lib/db'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organizationId')
     const phone = searchParams.get('phone')
     const search = searchParams.get('search')
     const tier = searchParams.get('tier')
 
     const where: any = {}
+
+    if (organizationId) {
+      where.organizationId = organizationId
+    }
 
     if (phone) {
       where.phone = phone
@@ -66,12 +71,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, phone, email, address, gstin, panNumber } = body
+    const { organizationId, name, phone, email, address, gstin, panNumber } = body
 
-    // Check if customer with phone already exists
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: 'Organization ID is required' },
+        { status: 400 }
+      )
+    }
+
     if (phone) {
-      const existing = await db.customer.findUnique({
-        where: { phone }
+      const existing = await db.customer.findFirst({
+        where: { phone, organizationId }
       })
 
       if (existing) {
@@ -84,6 +95,7 @@ export async function POST(request: NextRequest) {
 
     const customer = await db.customer.create({
       data: {
+        organizationId,
         name,
         phone,
         email,
@@ -115,7 +127,14 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, name, phone, email, address, gstin, panNumber } = body
+    const { organizationId, id, name, phone, email, address, gstin, panNumber } = body
+
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: 'Organization ID is required' },
+        { status: 400 }
+      )
+    }
 
     if (!id) {
       return NextResponse.json(
@@ -124,8 +143,8 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    const customer = await db.customer.findUnique({
-      where: { id }
+    const customer = await db.customer.findFirst({
+      where: { id, organizationId }
     })
 
     if (!customer) {
@@ -142,9 +161,8 @@ export async function PUT(request: NextRequest) {
     if (gstin !== undefined) updateData.gstin = gstin
     if (panNumber !== undefined) updateData.panNumber = panNumber
     if (phone !== undefined) {
-      // Check if new phone number conflicts
-      const existing = await db.customer.findUnique({
-        where: { phone }
+      const existing = await db.customer.findFirst({
+        where: { phone, organizationId }
       })
       if (existing && existing.id !== id) {
         return NextResponse.json(
@@ -178,7 +196,15 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organizationId')
     const id = searchParams.get('id')
+
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: 'Organization ID is required' },
+        { status: 400 }
+      )
+    }
 
     if (!id) {
       return NextResponse.json(

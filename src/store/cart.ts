@@ -9,6 +9,7 @@ interface CartState {
   // Actions
   setCart: (cart: CartItem[]) => void
   addToCart: (menuItem: MenuItem) => void
+  addCustomAmount: (amount: number, description?: string) => void
   updateQuantity: (itemId: string, newQuantity: number) => void
   removeFromCart: (itemId: string) => void
   clearCart: () => void
@@ -53,6 +54,36 @@ export const useCartStore = create<CartState>()(
             quantity: 1,
             subtotal: menuItem.price,
             gstAmount: gstAmount
+          }
+          set({ cart: [...cart, newItem] })
+        }
+      },
+
+      addCustomAmount: (amount, description = 'Custom Amount') => {
+        const { cart } = get()
+        const customItemId = 'custom-amount'
+        const existingItem = cart.find(item => item.menuItem.id === customItemId)
+
+        const customMenuItem: MenuItem = {
+          id: customItemId,
+          name: description,
+          description: `Custom amount: ₹${amount.toFixed(2)}`,
+          price: amount,
+          gstRate: 'ZERO',
+          hsnCode: null,
+          categoryId: 'custom',
+          isAvailable: true,
+          category: { name: 'Custom' }
+        }
+
+        if (existingItem) {
+          get().updateQuantity(customItemId, existingItem.quantity + 1)
+        } else {
+          const newItem: CartItem = {
+            menuItem: customMenuItem,
+            quantity: 1,
+            subtotal: amount,
+            gstAmount: 0
           }
           set({ cart: [...cart, newItem] })
         }

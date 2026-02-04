@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { orderId, email, orderData } = body
+    const { orderId, email, orderData, autoSend } = body
 
     if (!email) {
       return NextResponse.json(
@@ -231,7 +231,7 @@ export async function POST(req: NextRequest) {
     // Create plain text version
     const plainText = `
 COFFEE SHOP POS - RECEIPT
-=========================
+========================
 Order #${order.orderNumber}
 Date: ${new Date(order.createdAt || new Date()).toLocaleString('en-IN')}
 ${order.customerName ? `Customer: ${order.customerName}` : ''}
@@ -249,13 +249,29 @@ SGST: ₹${(order.sgst || 0).toFixed(2)}
 Total GST: ₹${(order.totalGst || 0).toFixed(2)}
 -------------------------
 TOTAL: ₹${(order.total || order.totalAmount || 0).toFixed(2)}
-=========================
+========================
 
 GSTIN: 22AAAAA0000A1Z5 (Demo)
 Payment Method: ${order.paymentMethod || 'CASH'}
 
 Thank you for your order!
     `.trim()
+
+    // For auto-send mode, indicate email is ready
+    if (autoSend) {
+      return NextResponse.json({
+        success: true,
+        message: 'Email invoice ready',
+        data: {
+          to: email,
+          subject,
+          html: htmlEmail,
+          plainText,
+          autoSend: true,
+          note: 'Email invoice generated (configure SMTP for automatic sending)'
+        }
+      })
+    }
 
     // In a real implementation, you would use a service like:
     // - SendGrid

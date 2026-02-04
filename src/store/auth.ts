@@ -1,10 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User, LoginData, SmsLoginData, LoginTab } from './types'
+import type { User, LoginData, SmsLoginData, LoginTab, Organization, Session } from './types'
 
 interface AuthState {
-  // State
-  user: User | null
+  user: (User & { organization?: Organization }) | null
+  session: Session | null
   loading: boolean
   loginData: LoginData
   loginError: string
@@ -14,8 +14,8 @@ interface AuthState {
   otpLoading: boolean
   smsLoginError: string
 
-  // Actions
-  setUser: (user: User | null) => void
+  setUser: (user: (User & { organization?: Organization }) | null) => void
+  setSession: (session: Session | null) => void
   setLoading: (loading: boolean) => void
   setLoginData: (data: LoginData) => void
   setLoginError: (error: string) => void
@@ -25,18 +25,18 @@ interface AuthState {
   setOtpLoading: (loading: boolean) => void
   setSmsLoginError: (error: string) => void
 
-  // Async actions
   login: () => Promise<void>
   logout: () => Promise<void>
   sendOtp: () => Promise<void>
   verifyOtp: () => Promise<void>
+  checkSession: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      // Initial state
       user: null,
+      session: null,
       loading: true,
       loginData: { email: '', password: '' },
       loginError: '',
@@ -46,8 +46,8 @@ export const useAuthStore = create<AuthState>()(
       otpLoading: false,
       smsLoginError: '',
 
-      // Setters
       setUser: (user) => set({ user }),
+      setSession: (session) => set({ session }),
       setLoading: (loading) => set({ loading }),
       setLoginData: (data) => set({ loginData: data }),
       setLoginError: (error) => set({ loginError: error }),
@@ -57,7 +57,6 @@ export const useAuthStore = create<AuthState>()(
       setOtpLoading: (loading) => set({ otpLoading: loading }),
       setSmsLoginError: (error) => set({ smsLoginError: error }),
 
-      // Async actions
       login: async () => {
         const { loginData } = get()
         set({ loading: true, loginError: '' })
@@ -75,7 +74,9 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const data = await response.json()
-          set({ user: data.user, loading: false })
+          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          const token = `sess_${Date.now()}_${Math.random().toString(36).substring(2)}`
+          set({ user: data.user, session: { userId: data.user.id, token, expiresAt }, loading: false })
         } catch (error) {
           set({
             loginError: error instanceof Error ? error.message : 'Login failed',
@@ -87,8 +88,7 @@ export const useAuthStore = create<AuthState>()(
       logout: async () => {
         set({ loading: true })
         try {
-          // Clear any session data if needed
-          set({ user: null, loading: false })
+          set({ user: null, session: null, loading: false })
         } catch (error) {
           set({ loading: false })
         }
@@ -136,7 +136,9 @@ export const useAuthStore = create<AuthState>()(
           }
 
           const data = await response.json()
-          set({ user: data.user, otpLoading: false, otpSent: false })
+          const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+          const token = `sess_${Date.now()}_${Math.random().toString(36).substring(2)}`
+          set({ user: data.user, session: { userId: data.user.id, token, expiresAt }, otpLoading: false, otpSent: false })
         } catch (error) {
           set({
             smsLoginError: error instanceof Error ? error.message : 'Invalid OTP',
@@ -144,10 +146,45 @@ export const useAuthStore = create<AuthState>()(
           })
         }
       },
+
+      checkSession: async () => {
+        const { session } = get()
+        
+        if (!session) {
+          set({ user: null, loading: false })
+          return
+        }
+
+        const expiresAt = new Date(session.expiresAt)
+        if (Date.now() > expiresAt.getTime()) {
+          set({ user: null, session: null, loading: false })
+          return
+        }
+
+        try {
+          const response = await fetch('/api/auth/me', {
+            headers: {
+              'x-session-token': session.token,
+              'x-user-id': session.userId
+            }
+          })
+
+          if (!response.ok) {
+            set({ user: null, session: null, loading: false })
+            return
+          }
+
+          const userData = await response.json()
+          set({ user: userData, loading: false })
+        } catch (error) {
+          console.error('Session check failed:', error)
+          set({ user: null, session: null, loading: false })
+        }
+      }
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ user: state.user }),
+      partialize: (state) => ({ user: state.user, session: state.session }),
     }
   )
 )

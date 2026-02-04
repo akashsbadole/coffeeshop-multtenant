@@ -5,7 +5,7 @@ import { db } from '@/lib/db'
 export async function GET() {
   try {
     let settings = await db.storeSettings.findFirst()
-
+    
     if (!settings) {
       // Create default settings if none exist
       settings = await db.storeSettings.create({
@@ -14,7 +14,6 @@ export async function GET() {
           storeName: 'Universal POS',
           invoicePrefix: 'INV',
           startingInvoice: 1,
-          currency: 'INR',
           defaultGstRate: 'EIGHTEEN',
           gstInclusivePricing: false,
           enableTableManagement: false,
@@ -26,6 +25,9 @@ export async function GET() {
           enableReturns: false,
           enableExchanges: false,
           enableLoyaltyProgram: false,
+          enableMultiStore: false,
+          enableDelivery: false,
+          enableVoiceCommands: false,
         },
       })
     }
@@ -57,19 +59,11 @@ export async function PUT(request: NextRequest) {
         data: {
           posType: body.posType || 'GENERAL',
           storeName: body.storeName,
-          address: body.address,
-          phone: body.phone,
-          email: body.email,
-          gstin: body.gstin,
-          state: body.state,
-          stateCode: body.stateCode,
           bankName: body.bankName,
           accountNumber: body.accountNumber,
           ifscCode: body.ifscCode,
           invoicePrefix: body.invoicePrefix || 'INV',
           startingInvoice: body.startingInvoice || 1,
-          currency: body.currency || 'INR',
-          logoUrl: body.logoUrl,
           enableTableManagement: body.enableTableManagement ?? false,
           enableKDS: body.enableKDS ?? false,
           enableSizeVariants: body.enableSizeVariants ?? false,
@@ -79,12 +73,9 @@ export async function PUT(request: NextRequest) {
           enableReturns: body.enableReturns ?? false,
           enableExchanges: body.enableExchanges ?? false,
           enableLoyaltyProgram: body.enableLoyaltyProgram ?? false,
-          enableGiftCards: body.enableGiftCards ?? false,
           enableMultiStore: body.enableMultiStore ?? false,
-          autoLogout: body.autoLogout ?? false,
-          showImages: body.showImages ?? false,
-          enableLoyalty: body.enableLoyalty ?? false,
-          enableStaffManagement: body.enableStaffManagement ?? false,
+          enableDelivery: body.enableDelivery ?? false,
+          enableVoiceCommands: body.enableVoiceCommands ?? false,
           defaultGstRate: body.defaultGstRate || 'EIGHTEEN',
           gstInclusivePricing: body.gstInclusivePricing ?? false,
           footerText: body.footerText,
@@ -104,19 +95,11 @@ export async function PUT(request: NextRequest) {
       data: {
         posType: body.posType,
         storeName: body.storeName,
-        address: body.address,
-        phone: body.phone,
-        email: body.email,
-        gstin: body.gstin,
-        state: body.state,
-        stateCode: body.stateCode,
         bankName: body.bankName,
         accountNumber: body.accountNumber,
         ifscCode: body.ifscCode,
         invoicePrefix: body.invoicePrefix,
         startingInvoice: body.startingInvoice,
-        currency: body.currency,
-        logoUrl: body.logoUrl,
         enableTableManagement: body.enableTableManagement,
         enableKDS: body.enableKDS,
         enableSizeVariants: body.enableSizeVariants,
@@ -126,12 +109,9 @@ export async function PUT(request: NextRequest) {
         enableReturns: body.enableReturns,
         enableExchanges: body.enableExchanges,
         enableLoyaltyProgram: body.enableLoyaltyProgram,
-        enableGiftCards: body.enableGiftCards,
         enableMultiStore: body.enableMultiStore,
-        autoLogout: body.autoLogout,
-        showImages: body.showImages,
-        enableLoyalty: body.enableLoyalty,
-        enableStaffManagement: body.enableStaffManagement,
+        enableDelivery: body.enableDelivery,
+        enableVoiceCommands: body.enableVoiceCommands,
         defaultGstRate: body.defaultGstRate,
         gstInclusivePricing: body.gstInclusivePricing,
         footerText: body.footerText,

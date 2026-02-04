@@ -1,5 +1,121 @@
 // Shared TypeScript types for all Zustand stores
 
+// ==================== Multi-Tenancy Types ====================
+
+export type SubscriptionStatus = 'ACTIVE' | 'TRIAL' | 'SUSPENDED' | 'CANCELLED' | 'EXPIRED' | 'PENDING'
+export type BillingCycle = 'MONTHLY' | 'QUARTERLY' | 'YEARLY'
+export type PlanType = 'FREE' | 'BASIC' | 'PROFESSIONAL' | 'ENTERPRISE'
+
+export interface Organization {
+  id: string
+  name: string
+  slug: string
+  email: string
+  phone?: string | null
+  logo?: string | null
+  industry?: string | null
+  gstin?: string | null
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  pincode?: string | null
+  country: string
+  timezone: string
+  isActive: boolean
+  maxUsers: number
+  maxStores: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface SubscriptionPlan {
+  id: string
+  name: string
+  type: PlanType
+  description?: string | null
+  price: number
+  yearlyPrice?: number | null
+  currency: string
+  features: string
+  maxUsers: number
+  maxStores: number
+  maxOrdersPerMonth?: number | null
+  maxMenuItems?: number | null
+  maxInventoryItems?: number | null
+  supportLevel: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface TenantSubscription {
+  id: string
+  organizationId: string
+  planId: string
+  status: SubscriptionStatus
+  billingCycle: BillingCycle
+  startDate: string
+  endDate?: string | null
+  nextBillingDate?: string | null
+  autoRenew: boolean
+  paymentMethod?: string | null
+  paymentProvider?: string | null
+  paymentStatus: string
+  notes?: string | null
+  createdAt: string
+  updatedAt: string
+  organization?: Organization
+  plan?: SubscriptionPlan
+}
+
+export interface CreateOrganizationData {
+  name: string
+  email: string
+  phone?: string
+  industry?: string
+  gstin?: string
+  address?: string
+  city?: string
+  state?: string
+  pincode?: string
+  country?: string
+}
+
+export interface UpdateOrganizationData {
+  name?: string
+  phone?: string
+  logo?: string
+  industry?: string
+  gstin?: string
+  address?: string
+  city?: string
+  state?: string
+  pincode?: string
+  country?: string
+  timezone?: string
+  maxUsers?: number
+  maxStores?: number
+  isActive?: boolean
+}
+
+export interface CreateSubscriptionData {
+  organizationId: string
+  planId: string
+  billingCycle: BillingCycle
+  autoRenew?: boolean
+  paymentMethod?: string
+  paymentProvider?: string
+}
+
+export interface UpdateSubscriptionData {
+  planId?: string
+  status?: SubscriptionStatus
+  billingCycle?: BillingCycle
+  autoRenew?: boolean
+  paymentStatus?: string
+  notes?: string
+}
+
 export interface POSConfig {
   posType: string
   name: string
@@ -29,10 +145,18 @@ export interface POSConfig {
 
 export interface User {
   id: string
+  organizationId: string
   email: string
   name: string
   role: string
   phone?: string | null
+  organization?: Organization
+}
+
+export interface Session {
+  userId: string
+  token: string
+  expiresAt: string
 }
 
 export interface MenuItem {
@@ -392,4 +516,95 @@ export interface StaffPerformanceFilters {
   startDate?: string
   endDate?: string
   staffId?: string
+}
+
+// ==================== Live Chat Support Types ====================
+
+export type TicketStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
+export type TicketPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
+export type MessageSender = 'CUSTOMER' | 'AGENT' | 'SYSTEM'
+
+export interface SupportTicket {
+  id: string
+  subject: string
+  description?: string | null
+  status: TicketStatus
+  priority: TicketPriority
+  createdById: string
+  assignedToId?: string | null
+  resolvedById?: string | null
+  orderId?: string | null
+  createdAt: string
+  updatedAt: string
+  resolvedAt?: string | null
+  closedAt?: string | null
+  assignedTo?: {
+    id: string
+    name: string
+    email: string
+  } | null
+  createdBy?: {
+    id: string
+    name: string
+    email: string
+  }
+}
+
+export interface ChatMessage {
+  id: string
+  ticketId: string
+  senderType: MessageSender
+  senderId: string
+  content: string
+  attachments?: string[] | null
+  isRead: boolean
+  readAt?: string | null
+  createdAt: string
+  sender?: {
+    id: string
+    name: string
+    email: string
+  }
+}
+
+export interface QuickResponse {
+  id: string
+  title: string
+  content: string
+  category?: string | null
+  isActive: boolean
+}
+
+export interface CreateTicketRequest {
+  type: 'ticket'
+  subject: string
+  description?: string
+  priority?: TicketPriority
+  createdById: string
+  orderId?: string
+}
+
+export interface CreateMessageRequest {
+  type: 'message'
+  ticketId: string
+  senderId: string
+  senderType: MessageSender
+  content: string
+  attachments?: string[]
+}
+
+export interface UpdateTicketRequest {
+  action: 'update-ticket'
+  ticketId: string
+  status?: TicketStatus
+  priority?: TicketPriority
+  assignedToId?: string | null
+  resolvedById?: string
+}
+
+export interface MarkReadRequest {
+  action: 'mark-read'
+  ticketId: string
+  userId: string
+  messageIds?: string[]
 }

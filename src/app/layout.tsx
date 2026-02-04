@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,46 +16,60 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "POS Code Scaffold - Retail, Coffee & Garment POS Web Applications",
+  title: "Coffee Shop POS - Complete POS Solution",
   description:
-    "A Building POS web applications including Retail POS, Coffee POS, Garment POS, and other business management systems. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
+    "A comprehensive Point of Sale system for coffee shops and restaurants. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
   keywords: [
     "POS",
     "Point of Sale System",
-    "Retail POS",
     "Coffee POS",
     "Restaurant POS",
-    "Garment POS",
-    "Clothing Store POS",
+    "Food POS",
     "Next.js POS",
     "POS Web Application",
     "Inventory Management System",
     "Billing Software",
     "Sales Management",
     "Business Management Software",
-    "React POS",
+    "GST Compliant POS",
+    "India POS System",
     "TypeScript POS",
     "Tailwind CSS",
     "shadcn/ui",
   ],
   authors: [{ name: "POS Development Team" }],
+  manifest: "/manifest.json",
   icons: {
-    icon: "https://your-pos-app.com/demo.svg",
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Coffee Shop POS",
   },
   openGraph: {
-    title: "POS Code Scaffold for Retail, Coffee & Garment Businesses",
+    title: "Coffee Shop POS - Complete POS Solution",
     description:
-      "Build modern Retail POS, Coffee POS, Garment POS, and inventory-driven business web applications using Next.js.",
+      "Comprehensive POS system for coffee shops and restaurants with GST compliance.",
     url: "https://your-pos-app.com",
-    siteName: "POS Scaffold",
+    siteName: "Coffee Shop POS",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "POS Web Application Scaffold",
+    title: "Coffee Shop POS",
     description:
-      "Modern scaffold for Retail POS, Coffee POS, Garment POS, and business management web applications.",
+      "Modern POS system for coffee shops with GST compliance and advanced features.",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#f97316",
 };
 
 
@@ -68,9 +83,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        {children}
-        <Toaster />
-        <SonnerToaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+          <SonnerToaster />
+        </ThemeProvider>
       </body>
     </html>
   );

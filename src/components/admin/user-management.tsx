@@ -267,7 +267,7 @@ export function UserManagement() {
                           onClick={() => handleEdit(user)}
                           className="hover:bg-blue-50 hover:text-blue-600"
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-4 w-4" color="#fff" />
                         </Button>
                         <Button
                           variant="ghost"
@@ -275,7 +275,7 @@ export function UserManagement() {
                           onClick={() => handleDelete(user.id, user.name)}
                           className="hover:bg-red-50 hover:text-red-600"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" color="#fff" />
                         </Button>
                       </div>
                     </div>

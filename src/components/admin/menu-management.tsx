@@ -257,7 +257,7 @@ export function MenuManagement() {
                               {getCategoryIcon(item.category.name)}
                             </div>
                             <div>
-                              <h4 className="font-semibold text-gray-900">{item.name}</h4>
+                              <h4 className="font-semibold text-white">{item.name}</h4>
                               <p className="text-sm text-gray-500 mt-1">{item.category.name}</p>
                               <div className="flex items-center gap-3 mt-2">
                                 <span className="text-lg font-bold text-amber-600">₹{item.price.toFixed(2)}</span>
@@ -278,7 +278,7 @@ export function MenuManagement() {
                               className="hover:bg-green-50 hover:text-green-600"
                               title={item.isAvailable ? 'Mark as unavailable' : 'Mark as available'}
                             >
-                              {item.isAvailable ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                              {item.isAvailable ? <Pencil className="h-4 w-4" color="#fff" /> : <Plus className="h-4 w-4" color="#fff" />}
                             </Button>
                             <Button
                               variant="ghost"
@@ -286,7 +286,7 @@ export function MenuManagement() {
                               onClick={() => handleDelete(item.id, item.name)}
                               className="hover:bg-red-50 hover:text-red-600"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" color="#fff" />
                             </Button>
                           </div>
                         </div>
@@ -336,7 +336,7 @@ export function MenuManagement() {
                             {getCategoryIcon(category.name)}
                           </div>
                           <div>
-                            <CardTitle className="text-base">{category.name}</CardTitle>
+                            <CardTitle className="text-base text-white">{category.name}</CardTitle>
                             {category.description && (
                               <CardDescription className="text-xs mt-1">
                                 {category.description}

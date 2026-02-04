@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { orderId, phoneNumber, orderData } = body
+    const { orderId, phoneNumber, orderData, autoSend } = body
 
     if (!phoneNumber) {
       return NextResponse.json(
@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
     message += `-----------------\n`
     message += `🧾 *Order #${order.orderNumber}*\n`
     message += `📅 ${new Date(order.createdAt || new Date()).toLocaleString('en-IN')}\n\n`
+    message += `*INVOICE*\n`
+    message += `-----------------\n\n`
 
     message += `*Items:*\n`
     items.forEach((item: any, index: number) => {
@@ -65,10 +67,20 @@ export async function POST(req: NextRequest) {
     const encodedMessage = encodeURIComponent(message)
     const whatsappURL = `https://wa.me/${formattedPhone.replace('+', '')}?text=${encodedMessage}`
 
-    // Here you would typically use:
-    // - Twilio API for WhatsApp
-    // - Meta WhatsApp Business API
-    // - Third-party services like Gupshup, WATI, etc.
+    // For auto-send mode
+    if (autoSend) {
+      return NextResponse.json({
+        success: true,
+        message: 'WhatsApp invoice ready',
+        data: {
+          phoneNumber: formattedPhone,
+          message,
+          whatsappURL,
+          autoSend: true,
+          note: 'WhatsApp URL generated for invoice'
+        }
+      })
+    }
 
     return NextResponse.json({
       success: true,

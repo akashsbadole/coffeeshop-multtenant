@@ -63,13 +63,7 @@ export function KDS() {
   const [selectedStatus, setSelectedStatus] = useState('PENDING')
   const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    fetchKDSOrders()
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchKDSOrders, 30000)
-    return () => clearInterval(interval)
-  }, [selectedStatus])
-
+  // Separate fetch function for reuse
   const fetchKDSOrders = async () => {
     try {
       const response = await fetch(`/api/pos/kds?status=${selectedStatus}`)
@@ -82,6 +76,17 @@ export function KDS() {
       toast.error('Failed to load orders')
     }
   }
+
+  useEffect(() => {
+    fetchKDSOrders()
+    
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchKDSOrders, 30000)
+    
+    return () => {
+      clearInterval(interval)
+    }
+  }, [selectedStatus])
 
   const updateItemStatus = async (orderItemId: string, newStatus: string) => {
     try {
@@ -169,7 +174,7 @@ export function KDS() {
                 <Utensils className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{kdsData?.summary.totalOrders || 0}</p>
+                <p className="text-2xl font-bold text-white">{kdsData?.summary.totalOrders || 0}</p>
                 <p className="text-sm text-gray-500">Active Orders</p>
               </div>
             </div>
@@ -182,7 +187,7 @@ export function KDS() {
                 <ChefHat className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{totalItems}</p>
+                <p className="text-2xl font-bold text-white">{totalItems}</p>
                 <p className="text-sm text-gray-500">Items to Prep</p>
               </div>
             </div>
@@ -195,7 +200,7 @@ export function KDS() {
                 <Clock className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{selectedStatus}</p>
+                <p className="text-2xl font-bold text-white">{selectedStatus}</p>
                 <p className="text-sm text-gray-500">Viewing Status</p>
               </div>
             </div>
@@ -234,7 +239,7 @@ export function KDS() {
                     )}
                   </div>
                   <div className={`flex items-center gap-1 ${getTimeColor(orderGroup.order.createdAt)}`}>
-                    <Clock className="h-4 w-4" />
+                    <Clock className="h-4 w-4" color="#fff" />
                     <span className="text-sm font-medium">
                       {getTimeSinceOrder(orderGroup.order.createdAt)}
                     </span>

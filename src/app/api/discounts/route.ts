@@ -4,14 +4,26 @@ import { db } from '@/lib/db'
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
+    const organizationId = searchParams.get('organizationId')
     const activeOnly = searchParams.get('active') === 'true'
-    const typeParam = searchParams.get('type') // all, percentage, fixed, bogo, bundle
+    const typeParam = searchParams.get('type')
+
+    const where: any = {}
+    
+    if (organizationId) {
+      where.organizationId = organizationId
+    }
+    
+    if (activeOnly) {
+      where.isActive = true
+    }
+    
+    if (typeParam) {
+      where.type = typeParam.toUpperCase()
+    }
 
     const discounts = await db.discount.findMany({
-      where: {
-        isActive: activeOnly ? true : undefined,
-        type: typeParam ? typeParam.toUpperCase() : undefined
-      },
+      where,
       orderBy: { createdAt: 'desc' }
     })
 
@@ -29,8 +41,9 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const {
+      organizationId,
       code,
-      type, // PERCENTAGE, FIXED, BOGO, BUNDLE
+      type,
       value,
       description,
       usageLimit,
@@ -42,9 +55,15 @@ export async function POST(req: NextRequest) {
       isActive
     } = body
 
-    // Check if discount code already exists
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: 'Organization ID is required' },
+        { status: 400 }
+      )
+    }
+
     const existingDiscount = await db.discount.findFirst({
-      where: { code: code.toUpperCase() }
+      where: { code: code.toUpperCase(), organizationId }
     })
 
     if (existingDiscount) {
@@ -54,7 +73,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Validate dates
     if (validFrom && validUntil && new Date(validFrom) > new Date(validUntil)) {
       return NextResponse.json(
         { error: 'End date must be after start date' },
@@ -62,9 +80,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Create discount
     const discount = await db.discount.create({
       data: {
+        organizationId,
         code: code.toUpperCase(),
         type: type?.toUpperCase() || 'PERCENTAGE',
         value: parseFloat(value) || 0,

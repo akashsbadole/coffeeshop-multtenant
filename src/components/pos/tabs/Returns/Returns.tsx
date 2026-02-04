@@ -231,7 +231,7 @@ export function Returns() {
                 <Clock className="h-5 w-5 text-yellow-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{returns.filter(r => r.status === 'REQUESTED').length}</p>
+                <p className="text-2xl font-bold text-white">{returns.filter(r => r.status === 'REQUESTED').length}</p>
                 <p className="text-sm text-gray-500">Pending</p>
               </div>
             </div>
@@ -244,7 +244,7 @@ export function Returns() {
                 <CheckCircle className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{returns.filter(r => r.status === 'APPROVED').length}</p>
+                <p className="text-2xl font-bold text-white">{returns.filter(r => r.status === 'APPROVED').length}</p>
                 <p className="text-sm text-gray-500">Approved</p>
               </div>
             </div>
@@ -257,7 +257,7 @@ export function Returns() {
                 <RotateCcw className="h-5 w-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{returns.filter(r => r.status === 'COMPLETED').length}</p>
+                <p className="text-2xl font-bold text-white">{returns.filter(r => r.status === 'COMPLETED').length}</p>
                 <p className="text-sm text-gray-500">Completed</p>
               </div>
             </div>
@@ -270,7 +270,7 @@ export function Returns() {
                 <XCircle className="h-5 w-5 text-red-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{returns.filter(r => r.status === 'REJECTED').length}</p>
+                <p className="text-2xl font-bold text-white">{returns.filter(r => r.status === 'REJECTED').length}</p>
                 <p className="text-sm text-gray-500">Rejected</p>
               </div>
             </div>
@@ -476,7 +476,7 @@ export function Returns() {
                       onChange={() => setFormData({ ...formData, returnType: 'RETURN' })}
                       className="w-4 h-4"
                     />
-                    <RotateCcw className="h-4 w-4" />
+                    <RotateCcw className="h-4 w-4" color="#fff" />
                     <span>Return</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -488,7 +488,7 @@ export function Returns() {
                       onChange={() => setFormData({ ...formData, returnType: 'EXCHANGE' })}
                       className="w-4 h-4"
                     />
-                    <ArrowRightLeft className="h-4 w-4" />
+                    <ArrowRightLeft className="h-4 w-4" color="#fff" />
                     <span>Exchange</span>
                   </label>
                 </div>

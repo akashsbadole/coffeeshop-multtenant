@@ -4,7 +4,7 @@ import { db } from '@/lib/db'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { code, orderTotal, customerPhone } = body
+    const { code, orderTotal, customerPhone, organizationId } = body
 
     if (!code) {
       return NextResponse.json(
@@ -13,10 +13,18 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: 'Organization ID is required' },
+        { status: 400 }
+      )
+    }
+
     // Find discount by code
     const discount = await db.discount.findFirst({
       where: {
         code: code.toUpperCase(),
+        organizationId,
         isActive: true
       }
     })
@@ -30,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     // Check if discount has expired
     const now = new Date()
-    if (discount.startDate > now || discount.endDate < now) {
+    if (discount.validFrom > now || (discount.validUntil && discount.validUntil < now)) {
       return NextResponse.json({
         valid: false,
         message: 'Discount has expired'
@@ -38,7 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if max uses reached
-    if (discount.maxUses && discount.currentUses >= discount.maxUses) {
+    if (discount.usageLimit && discount.usedCount >= discount.usageLimit) {
       return NextResponse.json({
         valid: false,
         message: 'Discount code usage limit reached'
@@ -78,7 +86,7 @@ export async function POST(req: NextRequest) {
     await db.discount.update({
       where: { id: discount.id },
       data: {
-        currentUses: discount.currentUses + 1
+        usedCount: discount.usedCount + 1
       }
     })
 
@@ -101,7 +109,6 @@ export async function POST(req: NextRequest) {
         id: discount.id,
         code: discount.code,
         type: discount.type,
-        description: discount.description,
         discountAmount: discountAmount.toFixed(2),
         originalTotal: orderTotal.toFixed(2),
         discountedTotal: discountedTotal.toFixed(2),

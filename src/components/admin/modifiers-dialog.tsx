@@ -211,7 +211,7 @@ export function ModifiersDialog({ isOpen, onClose, menuItem, currentModifiers, o
 
           <div className="flex justify-between items-center text-sm text-gray-500">
             <div className="flex gap-2">
-              <Snowflake className="h-4 w-4" />
+              <Snowflake className="h-4 w-4" color="#fff" />
               <span className="italic">Including GST @ {parseFloat(menuItem.gstRate)}% tax</span>
             </div>
             <div>

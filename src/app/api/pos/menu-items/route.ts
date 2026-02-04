@@ -1,9 +1,32 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organizationId')
+    const categoryId = searchParams.get('categoryId')
+    const search = searchParams.get('search')
+
+    const where: any = {}
+    
+    if (organizationId) {
+      where.organizationId = organizationId
+    }
+    
+    if (categoryId) {
+      where.categoryId = categoryId
+    }
+    
+    if (search) {
+      where.OR = [
+        { name: { contains: search } },
+        { description: { contains: search } }
+      ]
+    }
+
     const menuItems = await db.menuItem.findMany({
+      where,
       include: {
         category: true
       },
@@ -23,6 +46,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const {
+      organizationId,
       name,
       description,
       price,
@@ -33,8 +57,16 @@ export async function POST(request: Request) {
       modifiers
     } = body
 
+    if (!organizationId) {
+      return NextResponse.json(
+        { error: 'Organization ID is required' },
+        { status: 400 }
+      )
+    }
+
     const menuItem = await db.menuItem.create({
       data: {
+        organizationId,
         name,
         description,
         price: parseFloat(price),

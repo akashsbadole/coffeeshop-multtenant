@@ -302,7 +302,7 @@ export function InvoiceGeneration({ order, onClose }: InvoiceGenerationProps) {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Package className="h-4 w-4" />
+                  <Package className="h-4 w-4" color="#fff" />
                   BILL TO
                 </h3>
                 <div className="bg-amber-50 rounded-lg p-4">
@@ -317,7 +317,7 @@ export function InvoiceGeneration({ order, onClose }: InvoiceGenerationProps) {
 
               <div>
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  <Receipt className="h-4 w-4" />
+                  <Receipt className="h-4 w-4" color="#fff" />
                   INVOICE DETAILS
                 </h3>
                 <div className="bg-amber-50 rounded-lg p-4 space-y-2">
