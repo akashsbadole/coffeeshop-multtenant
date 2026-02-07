@@ -661,7 +661,7 @@ export function StaffManagement() {
             <Calendar className="h-4 w-4 mr-2" />
             New Shift
           </Button>
-          <Button onClick={() => setAddStaffOpen(true)} className="bg-linear-to-r from-amber-500 to-orange-600">
+          <Button onClick={() => setAddStaffOpen(true)} className="bg-card">
             <UserPlus className="h-4 w-4 mr-2" />
             Add Staff
           </Button>
@@ -699,7 +699,7 @@ export function StaffManagement() {
         {/* Staff Members Tab */}
         <TabsContent value="staff">
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
+            <CardHeader className="bg-card text-white">
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-6 w-6" />
                 Staff Members ({staff.length})
@@ -1072,7 +1072,7 @@ export function StaffManagement() {
       {/* Add Staff Dialog */}
       <Dialog open={addStaffOpen} onOpenChange={setAddStaffOpen}>
         <DialogContent className="border-0 shadow-2xl max-w-md">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2"><UserPlus className="h-6 w-6" />Add Staff Member</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -1084,7 +1084,7 @@ export function StaffManagement() {
           </div>
           <DialogFooter className="mt-6">
             <Button variant="outline" onClick={() => setAddStaffOpen(false)}>Cancel</Button>
-            <Button onClick={handleAddStaff} className="bg-linear-to-r from-amber-500 to-orange-600"><UserPlus className="h-4 w-4 mr-2" />Add Staff</Button>
+            <Button onClick={handleAddStaff} className="bg-card"><UserPlus className="h-4 w-4 mr-2" />Add Staff</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1092,7 +1092,7 @@ export function StaffManagement() {
       {/* Edit Staff Dialog */}
       <Dialog open={editStaffOpen} onOpenChange={setEditStaffOpen}>
         <DialogContent className="border-0 shadow-2xl max-w-md">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2"><Edit className="h-6 w-6" />Edit Staff Member</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -1103,7 +1103,7 @@ export function StaffManagement() {
           </div>
           <DialogFooter className="mt-6">
             <Button variant="outline" onClick={() => setEditStaffOpen(false)}>Cancel</Button>
-            <Button onClick={handleUpdateStaff} className="bg-linear-to-r from-amber-500 to-orange-600"><Edit className="h-4 w-4 mr-2" />Update</Button>
+            <Button onClick={handleUpdateStaff} className="bg-card"><Edit className="h-4 w-4 mr-2" />Update</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -142,7 +142,7 @@ export function KDS() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Kitchen Display</h2>
-          <p className="text-gray-500">Real-time order management for kitchen</p>
+          <p className="text-black">Real-time order management for kitchen</p>
         </div>
         <div className="flex items-center gap-4">
           {/* Status Filter */}

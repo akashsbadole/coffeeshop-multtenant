@@ -226,7 +226,7 @@ export function ProductVariants() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Product Variants</h2>
-          <p className="text-gray-500">Manage size, color, and other product variants</p>
+          <p className="text-black">Manage size, color, and other product variants</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={fetchData} variant="outline">

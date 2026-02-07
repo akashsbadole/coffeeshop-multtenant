@@ -191,7 +191,7 @@ export function CashDrawer() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Cash Drawer Management</h2>
-          <p className="text-gray-500">Manage cash drawers and track cash flow</p>
+          <p className="text-black">Manage cash drawers and track cash flow</p>
         </div>
         <div className="flex gap-2">
           <Button 

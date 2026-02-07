@@ -274,7 +274,7 @@ export function PurchaseOrderManagement() {
         </div>
         <Button
           onClick={() => setAddPOpen(true)}
-          className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+          className="bg-card hover:from-amber-600 hover:to-orange-700"
         >
           <Plus className="h-4 w-4 mr-2" />
           Create PO
@@ -317,7 +317,7 @@ export function PurchaseOrderManagement() {
 
       {/* Purchase Orders List */}
       <Card className="shadow-xl border-0">
-        <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
+        <CardHeader className="bg-card text-white">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -464,7 +464,7 @@ export function PurchaseOrderManagement() {
       {/* Add PO Dialog */}
       <Dialog open={addPOpen} onOpenChange={setAddPOpen}>
         <DialogContent className="border-0 shadow-2xl max-w-4xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Plus className="h-6 w-6" />
               Create Purchase Order
@@ -561,7 +561,7 @@ export function PurchaseOrderManagement() {
                     <div className="flex items-end">
                       <Button
                         onClick={addItemToForm}
-                        className="w-full bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                        className="w-full bg-card hover:from-amber-600 hover:to-orange-700"
                       >
                         <Plus className="h-4 w-4 mr-2" />
                         Add
@@ -624,7 +624,7 @@ export function PurchaseOrderManagement() {
             <Button
               onClick={handleAddPO}
               disabled={poForm.items.length === 0}
-              className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="bg-card hover:from-amber-600 hover:to-orange-700"
             >
               <ShoppingCart className="h-4 w-4 mr-2" />
               Create Order
@@ -636,7 +636,7 @@ export function PurchaseOrderManagement() {
       {/* View PO Dialog */}
       <Dialog open={viewPOpen} onOpenChange={setViewPOpen}>
         <DialogContent className="border-0 shadow-2xl max-w-4xl max-h-[85vh] overflow-y-auto">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Package className="h-6 w-6" />
               Purchase Order {selectedPO?.orderNumber}
@@ -714,7 +714,7 @@ export function PurchaseOrderManagement() {
           <DialogFooter className="mt-6">
             <Button
               onClick={() => setViewPOpen(false)}
-              className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="bg-card hover:from-amber-600 hover:to-orange-700"
             >
               Close
             </Button>

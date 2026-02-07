@@ -216,7 +216,7 @@ export function MenuManagement() {
         {/* Menu Items Tab */}
         <TabsContent value="items">
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
+            <CardHeader className="bg-card text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
@@ -302,7 +302,7 @@ export function MenuManagement() {
         {/* Categories Tab */}
         <TabsContent value="categories">
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
+            <CardHeader className="bg-card text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
@@ -360,7 +360,7 @@ export function MenuManagement() {
         if (!open) resetForm()
       }}>
         <DialogContent className="max-w-lg border-0 shadow-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-2xl font-bold">
               {activeTab === 'items' ? 'Add Menu Item' : 'Add Category'}
             </DialogTitle>
@@ -469,7 +469,7 @@ export function MenuManagement() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 h-11 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
+                  className="flex-1 h-11 bg-card hover:from-amber-600 hover:to-orange-700 shadow-lg"
                 >
                   {isLoading ? 'Saving...' : 'Add Item'}
                 </Button>
@@ -516,7 +516,7 @@ export function MenuManagement() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 h-11 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg"
+                  className="flex-1 h-11 bg-card hover:from-amber-600 hover:to-orange-700 shadow-lg"
                 >
                   {isLoading ? 'Saving...' : 'Add Category'}
                 </Button>

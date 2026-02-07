@@ -263,7 +263,7 @@ export function AnnouncementManagement() {
         </div>
         <Button
           onClick={() => setAddAnnouncementOpen(true)}
-          className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+          className="bg-card hover:from-amber-600 hover:to-orange-700"
         >
           <Plus className="h-4 w-4 mr-2" />
           Create Announcement
@@ -299,7 +299,7 @@ export function AnnouncementManagement() {
       </div>
 
       <Card className="shadow-xl border-0">
-        <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
+        <CardHeader className="bg-card text-white">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -446,7 +446,7 @@ export function AnnouncementManagement() {
       {/* Add Announcement Dialog */}
       <Dialog open={addAnnouncementOpen} onOpenChange={setAddAnnouncementOpen}>
         <DialogContent className="border-0 shadow-2xl max-w-2xl">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Plus className="h-6 w-6" />
               Create Announcement
@@ -564,7 +564,7 @@ export function AnnouncementManagement() {
             </Button>
             <Button
               onClick={handleAddAnnouncement}
-              className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="bg-card hover:from-amber-600 hover:to-orange-700"
             >
               <Megaphone className="h-4 w-4 mr-2" />
               Create Announcement
@@ -576,7 +576,7 @@ export function AnnouncementManagement() {
       {/* Edit Announcement Dialog */}
       <Dialog open={editAnnouncementOpen} onOpenChange={setEditAnnouncementOpen}>
         <DialogContent className="border-0 shadow-2xl max-w-2xl">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Edit className="h-6 w-6" />
               Edit Announcement
@@ -693,7 +693,7 @@ export function AnnouncementManagement() {
             </Button>
             <Button
               onClick={handleUpdateAnnouncement}
-              className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="bg-card hover:from-amber-600 hover:to-orange-700"
             >
               <Edit className="h-4 w-4 mr-2" />
               Update Announcement

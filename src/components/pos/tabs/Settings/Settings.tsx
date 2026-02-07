@@ -101,10 +101,10 @@ export function Settings() {
       const response = await fetch('/api/pos/store-settings')
       if (response.ok) {
         const data = await response.json()
-        setSettings(data)
-        setFormData(data)
-        if (data.logoUrl) {
-          setLogoPreview(data.logoUrl)
+        setSettings(data.data)
+        setFormData(data.data)
+        if (data.data.logoUrl) {
+          setLogoPreview(data.data.logoUrl)
         }
       } else {
         toast.error('Failed to fetch settings')
@@ -128,7 +128,8 @@ export function Settings() {
 
       if (response.ok) {
         const updatedSettings = await response.json()
-        setSettings(updatedSettings)
+        setSettings(updatedSettings.data)
+        setFormData(updatedSettings.data)
         toast.success('Settings saved successfully')
       } else {
         const errorData = await response.json()
@@ -460,7 +461,7 @@ export function Settings() {
                 <Label htmlFor="gstInclusive" className="text-sm font-medium cursor-pointer">
                   GST Inclusive Pricing
                 </Label>
-                <span className="text-sm text-gray-500 ml-auto">
+                <span className="text-sm text-black ml-auto">
                   {formData.gstInclusivePricing ? 'Prices shown include GST' : 'GST will be added to prices'}
                 </span>
               </div>

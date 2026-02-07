@@ -170,7 +170,7 @@ export function Tables() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Table Management</h2>
-          <p className="text-gray-500">Manage restaurant tables and floor plan</p>
+          <p className="text-black">Manage restaurant tables and floor plan</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={fetchTables} variant="outline">

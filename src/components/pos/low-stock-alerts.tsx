@@ -158,7 +158,7 @@ export function LowStockAlertsPanel({ onClose }: LowStockAlertsPanelProps) {
               <div className="p-8 text-center">
                 <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
                 <p className="text-lg font-medium text-gray-900 dark:text-gray-100">All Stock Levels Normal</p>
-                <p className="text-gray-500">No low stock alerts at this time</p>
+                <p className="text-black">No low stock alerts at this time</p>
               </div>
             ) : (
               <div className="divide-y dark:divide-gray-800">

@@ -153,7 +153,7 @@ export function AdvancedCharts() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Advanced Analytics</h2>
-          <p className="text-gray-500">Visualize your business performance with interactive charts</p>
+          <p className="text-black">Visualize your business performance with interactive charts</p>
         </div>
         <div className="flex gap-2">
           <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">

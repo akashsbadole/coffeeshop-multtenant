@@ -78,7 +78,14 @@ import {
   Key,
   Shield,
   Megaphone,
-  Calculator
+  Calculator,
+  Check,
+  Zap,
+  BarChart,
+  UsersIcon,
+  Truck,
+  Heart,
+  ArrowRight
 } from 'lucide-react'
 import {
   useAuthStore,
@@ -875,9 +882,9 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-linear-to-br from-orange-50 via-amber-50 to-yellow-50">
+    <div className="min-h-screen flex flex-col bg-linear-to-br from-slate-50 via-slate-100 to-slate-200">
       {/* Header */}
-      <header className="bg-linear-to-br from-amber-600 to-orange-600 text-white shadow-xl">
+      <header className="bg-linear-to-br from-blue-600 to-slate-700 text-white shadow-xl">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Link href="/">
@@ -891,7 +898,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   <Badge variant="secondary" className="bg-white/20 text-white hover:bg-white/30 border-0 text-xs">
                     {posConfig?.posType || 'GENERAL'}
                   </Badge>
-                  <p className="text-amber-100 text-xs">India GST Compliant</p>
+                  <p className="text-blue-100 text-xs">India GST Compliant</p>
                 </div>
               </div>
             </div>
@@ -947,13 +954,13 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
       <main className="flex-1 container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-          <TabsList className="grid w-full grid-cols-8 lg:grid-cols-8 gap-4 mb-2 bg-white shadow-lg p-2 rounded-xl border-amber-200">
-            <TabsTrigger value="pos" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+          <TabsList className="grid w-full grid-cols-8 lg:grid-cols-8 gap-4 mb-2 bg-white shadow-lg p-2 rounded-xl border-slate-200">
+            <TabsTrigger value="pos" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white">
               <ShoppingCart className="h-4 w-4 mr-2" />
               POS
             </TabsTrigger>
             {posConfig?.features.orders && (
-              <TabsTrigger value="orders" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-amber-500 data-[state=active]:to-orange-600 data-[state=active]:text-white">
+              <TabsTrigger value="orders" className="data-[state=active]:bg-linear-to-br data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white">
                 <Receipt className="h-4 w-4 mr-2" />
                 Orders
               </TabsTrigger>
@@ -1085,7 +1092,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
               {/* Calculator Modal */}
               {showCalculator && (
-                <div className="fixed inset-0 z-[60] flex items-start justify-start pt-20 pl-4">
+                <div className="fixed inset-0 z-60 flex items-start justify-start pt-20 pl-4">
                   <div
                     className="absolute inset-0 bg-black/50"
                     onClick={() => setShowCalculator(false)}
@@ -1105,13 +1112,13 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               <div className="flex-1 flex flex-col gap-4 min-w-0 pl-2">
                 {/* Search Bar */}
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white h-5 w-5" />
                   <Input
                     type="text"
                     placeholder="Search menu items by name or description..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-12 bg-white shadow-sm border-amber-200 focus:border-amber-400 text-base"
+                    className="pl-12 h-12 bg-[#42789c]! shadow-smtext-base"
                   />
                 </div>
 
@@ -1122,7 +1129,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                     variant={selectedCategory === 'all' ? 'default' : 'outline'}
                     onClick={() => setSelectedCategory('all')}
                     className={selectedCategory === 'all'
-                      ? 'bg-linear-to-br from-amber-500 to-orange-600 text-black shadow-lg shrink-0'
+                      ? 'bg-card text-black shadow-lg shrink-0'
                       : 'bg-white hover:bg-amber-50 border-amber-200 shrink-0'
                     }
                   >
@@ -1159,7 +1166,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                             {item.name}
                           </CardTitle>
                           {item.description && (
-                            <p className="text-xs text-black! line-clamp-2">
+                            <p className="text-xs text-black!! line-clamp-2">
                               {item.description}
                             </p>
                           )}
@@ -1229,7 +1236,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-gray-900 line-clamp-1">
+                              <h4 className="font-semibold text-black line-clamp-1">
                                 {item.menuItem.name}
                               </h4>
                               <p className="text-xs text-white mt-1">
@@ -1284,7 +1291,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 {cart.length > 0 && (
                   <div className="border-t bg-gray-50 p-4 space-y-3">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Subtotal</span>
+                      <span className="text-black">Subtotal</span>
                       <span className="font-semibold text-black">{formatCurrency(subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-sm text-green-700">
@@ -1311,7 +1318,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         onClick={handleCancelOrder}
-                        className="bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        className="bg-gray-100 hover:bg-gray-200 text-black"
                       >
                         <RotateCcw className="h-4 w-4 mr-2" />
                         Cancel
@@ -1349,12 +1356,12 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
           {/* Orders Tab */}
           <TabsContent value="orders">
             <Card className="shadow-xl">
-              <CardHeader className="bg-linear-to-br from-amber-500 to-orange-600 text-white">
+              <CardHeader className="bg-card text-white">
                 <div className="flex items-center gap-2">
                   <Receipt className="h-6 w-6" />
                   Order History
                 </div>
-                <CardDescription className="text-amber-100">
+                <CardDescription className="text-white">
                   View and manage all orders
                 </CardDescription>
               </CardHeader>
@@ -1473,17 +1480,17 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold bg-linear-to-br from-purple-600 to-purple-800 bg-clip-text text-transparent">
+                  <h2 className="text-2xl font-bold">
                     AI-Powered Business Insights
                   </h2>
-                  <p className="text-gray-600 mt-1">Smart analytics and recommendations for your coffee shop</p>
+                  <p className="text-black! mt-1">Smart analytics and recommendations for your coffee shop</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
                     onClick={() => fetchAIInsights(7)}
                     variant={aiInsights?.period === '7 days' ? 'default' : 'outline'}
                     className={aiInsights?.period === '7 days'
-                      ? 'bg-linear-to-br from-purple-500 to-purple-600 text-white'
+                      ? 'bg-card text-white'
                       : ''
                     }
                   >
@@ -1493,7 +1500,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                     onClick={() => fetchAIInsights(30)}
                     variant={aiInsights?.period === '30 days' ? 'default' : 'outline'}
                     className={aiInsights?.period === '30 days'
-                      ? 'bg-linear-to-br from-purple-500 to-purple-600 text-white'
+                      ? 'bg-card text-white'
                       : ''
                     }
                   >
@@ -1503,7 +1510,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                     onClick={() => fetchAIInsights(90)}
                     variant={aiInsights?.period === '90 days' ? 'default' : 'outline'}
                     className={aiInsights?.period === '90 days'
-                      ? 'bg-linear-to-br from-purple-500 to-purple-600 text-white'
+                      ? 'bg-card text-white'
                       : ''
                     }
                   >
@@ -1524,25 +1531,25 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                 <>
                   {/* Summary Cards */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <Card className="border-0 shadow-lg bg-linear-to-br from-purple-500 to-purple-600 text-white">
+                    <Card className="border-0 shadow-lg bg-card text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-purple-100 text-sm">Total Revenue</CardDescription>
                         <CardTitle className="text-2xl font-bold text-center">{formatCurrency(aiInsights.summary.totalRevenue)}</CardTitle>
                       </CardHeader>
                     </Card>
-                    <Card className="border-0 shadow-lg bg-linear-to-br from-blue-500 to-blue-600 text-white">
+                    <Card className="border-0 shadow-lg text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-blue-100 text-sm">Total Orders</CardDescription>
                         <CardTitle className="text-2xl font-bold text-center">{aiInsights.summary.totalOrders}</CardTitle>
                       </CardHeader>
                     </Card>
-                    <Card className="border-0 shadow-lg bg-linear-to-br from-green-500 to-green-600 text-white">
+                    <Card className="border-0 shadow-lg  text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-green-100 text-sm">Avg Order Value</CardDescription>
                         <CardTitle className="text-2xl font-bold text-center">₹{aiInsights.summary.averageOrderValue}</CardTitle>
                       </CardHeader>
                     </Card>
-                    <Card className="border-0 shadow-lg bg-linear-to-br from-amber-500 to-orange-600 text-white">
+                    <Card className="border-0 shadow-lg  text-white">
                       <CardHeader className="p-4">
                         <CardDescription className="text-amber-100 text-sm">Analysis Period</CardDescription>
                         <CardTitle className="text-2xl font-bold text-center">{aiInsights.period}</CardTitle>
@@ -1556,7 +1563,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                       <Card key={index} className={`border-0 shadow-lg ${
                         insight.type === 'positive' ? 'bg-linear-to-br from-green-50 to-emerald-50 border-l-4 border-green-500' :
                         insight.type === 'warning' ? 'bg-linear-to-br from-red-50 to-orange-50 border-l-4 border-red-500' :
-                        'bg-linear-to-br from-blue-50 to-purple-50 border-l-4 border-blue-500'
+                        'bg-card'
                       }`}>
                         <CardHeader>
                           <CardTitle className={`text-lg flex items-center gap-2 ${
@@ -1569,10 +1576,10 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
-                          <p className="text-gray-700 mb-3">{insight.message}</p>
-                          <div className="bg-white/80 p-3 rounded-lg border">
+                          <p className="text-black mb-3">{insight.message}</p>
+                          <div className="bg-card p-3 rounded-lg border">
                             <p className="text-sm font-semibold text-gray-800 mb-1">💡 Recommendation:</p>
-                            <p className="text-[12px] text-gray-600 text-center">{insight.recommendation}</p>
+                            <p className="text-[12px] text-black">{insight.recommendation}</p>
                           </div>
                         </CardContent>
                       </Card>
@@ -1581,7 +1588,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
                   {/* Top Items */}
                   <Card className="border-0 shadow-lg">
-                    <CardHeader className="bg-linear-to-br from-purple-500 to-purple-600 text-white">
+                    <CardHeader className="bg-card text-white">
                       <CardTitle className="flex items-center gap-2">
                         <PieChart className="h-5 w-5" />
                         Top Selling Items
@@ -1601,7 +1608,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                                 {index + 1}
                               </div>
                               <div>
-                                <p className="font-semibold text-gray-900">{item.name}</p>
+                                <p className="font-semibold text-black">{item.name}</p>
                                 <p className="text-sm text-white">{item.quantity} items sold</p>
                               </div>
                             </div>
@@ -1770,19 +1777,19 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card className="border-2 border-green-200">
                       <CardContent className="p-4 text-center">
-                        <p className="text-[12px] text-gray-600 text-center">Opening Balance</p>
+                        <p className="text-[12px] text-black text-center">Opening Balance</p>
                         <p className="text-2xl font-bold text-green-600">₹5,000.00</p>
                       </CardContent>
                     </Card>
                     <Card className="border-2 border-blue-200">
                       <CardContent className="p-4 text-center">
-                        <p className="text-[12px] text-gray-600 text-center">Cash In</p>
+                        <p className="text-[12px] text-black text-center">Cash In</p>
                         <p className="text-2xl font-bold text-blue-600">₹12,500.00</p>
                       </CardContent>
                     </Card>
                     <Card className="border-2 border-purple-200">
                       <CardContent className="p-4 text-center">
-                        <p className="text-[12px] text-gray-600 text-center">Current Balance</p>
+                        <p className="text-[12px] text-black text-center">Current Balance</p>
                         <p className="text-2xl font-bold text-purple-600">₹17,500.00</p>
                       </CardContent>
                     </Card>
@@ -1918,7 +1925,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                         </div>
                         <div className="border-t-2 border-gray-300 pt-3 space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Subtotal:</span>
+                            <span className="text-black">Subtotal:</span>
                             <span className="font-semibold text-black">₹{order.subtotal.toFixed(2)}</span>
                           </div>
                           <div className="flex justify-between text-sm text-green-700">
@@ -1972,24 +1979,24 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Order #:</span>
+                  <span className="text-black">Order #:</span>
                   <span className="font-semibold text-black">{selectedOrderForReceipt.orderNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Date:</span>
+                  <span className="text-black">Date:</span>
                   <span className="font-semibold text-black">{new Date(selectedOrderForReceipt.createdAt).toLocaleString('en-IN')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Customer:</span>
+                  <span className="text-black">Customer:</span>
                   <span className="font-semibold text-black">{selectedOrderForReceipt.customerName || 'Walk-in'}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Items:</span>
+                  <span className="text-black">Items:</span>
                   <span className="font-semibold text-black">{selectedOrderForReceipt.items?.length || 0} items</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
-                  <span className="text-gray-700">Total:</span>
+                  <span className="text-black">Total:</span>
                   <span className="text-amber-600">{formatCurrency(selectedOrderForReceipt.totalAmount)}</span>
                 </div>
               </div>
@@ -2031,7 +2038,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">Phone Number</label>
+              <label className="text-sm font-semibold text-black mb-2 block">Phone Number</label>
               <Input
                 type="tel"
                 placeholder="+91 98765 43210"
@@ -2044,7 +2051,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
             {selectedOrderForReceipt && (
               <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                <p className="text-gray-600 mb-1">Order #<span className="font-semibold text-black">{selectedOrderForReceipt.orderNumber}</span></p>
+                <p className="text-black mb-1">Order #<span className="font-semibold text-black">{selectedOrderForReceipt.orderNumber}</span></p>
                 <p className="text-amber-600 font-bold">Total: {formatCurrency(selectedOrderForReceipt.totalAmount)}</p>
               </div>
             )}
@@ -2085,7 +2092,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-2 block">Email Address</label>
+              <label className="text-sm font-semibold text-black mb-2 block">Email Address</label>
               <Input
                 type="email"
                 placeholder="customer@example.com"
@@ -2097,7 +2104,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
             {selectedOrderForReceipt && (
               <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                <p className="text-gray-600 mb-1">Order #<span className="font-semibold text-black">{selectedOrderForReceipt.orderNumber}</span></p>
+                <p className="text-black mb-1">Order #<span className="font-semibold text-black">{selectedOrderForReceipt.orderNumber}</span></p>
                 <p className="text-amber-600 font-bold">Total: {formatCurrency(selectedOrderForReceipt.totalAmount)}</p>
               </div>
             )}
@@ -2137,7 +2144,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Name</label>
+              <label className="text-sm font-medium text-black mb-2 block">Name</label>
               <Input
                 value={profileData.name}
                 onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
@@ -2146,7 +2153,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Email</label>
+              <label className="text-sm font-medium text-black mb-2 block">Email</label>
               <Input
                 type="email"
                 value={profileData.email}
@@ -2156,7 +2163,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Phone</label>
+              <label className="text-sm font-medium text-black mb-2 block">Phone</label>
               <Input
                 type="tel"
                 value={profileData.phone}
@@ -2180,7 +2187,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                   setProfileDialogOpen(false)
                   setPasswordDialogOpen(true)
                 }}
-                className="flex-1 h-11 bg-linear-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                className="flex-1 h-11 bg-card hover:from-purple-600 hover:to-purple-700"
               >
                 <Key className="h-4 w-4 mr-2" />
                 Change Password
@@ -2200,7 +2207,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
       {/* Password Change Dialog */}
       <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
         <DialogContent className="max-w-md border-0 shadow-2xl">
-          <DialogHeader className="bg-linear-to-br from-purple-500 to-purple-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-2xl font-bold flex items-center gap-2">
               <Key className="h-6 w-6" />
               Change Password
@@ -2211,7 +2218,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Current Password</label>
+              <label className="text-sm font-medium text-black mb-2 block">Current Password</label>
               <Input
                 type="password"
                 value={passwordData.currentPassword}
@@ -2221,7 +2228,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">New Password</label>
+              <label className="text-sm font-medium text-black mb-2 block">New Password</label>
               <Input
                 type="password"
                 value={passwordData.newPassword}
@@ -2231,7 +2238,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               />
             </div>
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Confirm New Password</label>
+              <label className="text-sm font-medium text-black mb-2 block">Confirm New Password</label>
               <Input
                 type="password"
                 value={passwordData.confirmPassword}
@@ -2270,7 +2277,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
               <Button
                 onClick={handleChangePassword}
                 disabled={passwordLoading}
-                className="flex-1 h-11 bg-linear-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                className="flex-1 h-11 bg-card hover:from-purple-600 hover:to-purple-700"
               >
                 {passwordLoading ? 'Changing...' : 'Change Password'}
               </Button>
@@ -2306,41 +2313,41 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
             {/* Customer Info */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Name (Optional)</label>
+                <label className="text-sm font-medium text-white! mb-1 block">Name (Optional)</label>
                 <Input
                   placeholder="Customer name"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="h-10"
+                  className="h-10 text-white!"
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 mb-1 block">Phone (Optional)</label>
+                <label className="text-sm font-medium text-white! mb-1 block">Phone (Optional)</label>
                 <Input
                   type="tel"
                   placeholder="+91 98765 43210"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="h-10"
+                  className="h-10 text-white!"
                 />
               </div>
             </div>
 
             {/* Email */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Email (Optional)</label>
+              <label className="text-sm font-medium text-white! mb-1 block">Email (Optional)</label>
               <Input
                 type="email"
                 placeholder="customer@example.com"
                 value={receiptEmail}
                 onChange={(e) => setReceiptEmail(e.target.value)}
-                className="h-10"
+                className="h-10 text-white!"
               />
             </div>
 
             {/* Receipt Options */}
             <div className="bg-amber-50 rounded-lg p-4 space-y-3">
-              <label className="text-sm font-medium text-gray-700 block">Send Invoice (Optional)</label>
+              <label className="text-sm font-medium text-black block">Send Invoice (Optional)</label>
               <div className="grid grid-cols-2 gap-3">
                 <div 
                   className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border-2 transition-all ${
@@ -2389,7 +2396,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
             {/* Payment Method Selection */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-2 block">Payment Method</label>
+              <label className="text-sm font-medium text-black mb-2 block">Payment Method</label>
               <div className="grid grid-cols-4 gap-2">
                 <Button
                   type="button"
@@ -2448,9 +2455,9 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
             {/* UPI Configuration */}
             {paymentMethod === 'UPI' && (
-              <div className="bg-purple-50 rounded-lg p-4 space-y-4">
+              <div className="bg-purple-500 rounded-lg p-4 space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Your UPI ID</label>
+                  <label className="text-sm font-medium text-black mb-1 block">Your UPI ID</label>
                   <Input
                     placeholder="yourname@upi"
                     value={upiId}
@@ -2481,8 +2488,8 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
                     </Button>
 
                     {upiQrCode ? (
-                      <div className="bg-white p-4 rounded-lg shadow-md text-center">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Scan to Pay</p>
+                      <div className="bg-purple-500 p-4 rounded-lg shadow-md text-center">
+                        <p className="text-sm font-medium text-black mb-2">Scan to Pay</p>
                         <img
                           src={upiQrCode}
                           alt="UPI QR Code"
@@ -2509,13 +2516,13 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
             )}
 
             {/* Order Summary */}
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+            <div className="bg-black rounded-lg p-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Items ({cart.length})</span>
+                <span className="text-black">Items ({cart.length})</span>
                 <span className="font-medium text-white">{cart.length} items</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Subtotal</span>
+                <span className="text-black">Subtotal</span>
                 <span className="font-medium text-white">{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm text-green-700">
@@ -2535,7 +2542,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
 
             {/* Notes */}
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Order Notes (Optional)</label>
+              <label className="text-sm font-medium text-black mb-1 block">Order Notes (Optional)</label>
               <Input
                 placeholder="Special instructions..."
                 value={notes}
@@ -2584,7 +2591,7 @@ export function POSDashboard({ user, setUser, onLogout }: DashboardProps) {
       {/* Footer */}
       <footer className="bg-white border-t-2 border-amber-200 mt-auto">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between text-[12px] text-gray-600">
+          <div className="flex items-center justify-between text-[12px] text-black">
             <div className="flex items-center gap-3">
               <div className="bg-linear-to-br from-amber-500 to-orange-600 p-2 rounded-lg">
                 <Coffee className="h-4 w-4 text-white" />
@@ -2684,22 +2691,144 @@ export default function Page() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-amber-400">
-        <Card className="w-full max-w-md shadow-2xl border-2 border-amber-200 py-0 bg-[#a27d0d]">
-          <CardHeader className="bg-linear-to-br from-amber-600 to-orange-600 text-white rounded-t-lg p-8">
-            <div className="flex flex-col items-center gap-4">
-              <div className="bg-white/20 p-4 rounded-full">
-                <Coffee className="h-6 w-6" />
-              </div>
-              <div className="text-center">
-                <CardTitle className="text-2xl font-bold text-center">Coffee Shop POS</CardTitle>
-                <CardDescription className="text-amber-100 mt-2">
-                  Sign in to continue
-                </CardDescription>
+      <div className="min-h-screen bg-linear-to-br from-orange-50 via-amber-50 to-yellow-50">
+        {/* Header */}
+        <header className="bg-linear-to-br from-amber-600 to-orange-600 text-white">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/20 p-2 rounded-lg">
+                  <Coffee className="h-6 w-6" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">Universal POS</h1>
+                  <p className="text-amber-100 text-xs">India GST Compliant</p>
+                </div>
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="p-8">
+          </div>
+        </header>
+
+        {/* Hero Section */}
+        <section className="py-12 px-4 flex">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">
+                All-in-One <span className="bg-linear-to-br from-amber-600 to-orange-600 bg-clip-text text-transparent">Point of Sale</span> Solution
+              </h2>
+              <p className="text-black! max-w-2xl mx-auto">
+                From coffee shops to retail stores, manage everything in one powerful platform.
+                AI-powered insights, GST compliance, and seamless operations.
+              </p>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+              <div className="bg-white rounded-xl p-4 shadow-lg border border-amber-100 text-center">
+                <div className="text-2xl font-bold bg-linear-to-br from-amber-600 to-orange-600 bg-clip-text text-transparent">50K+</div>
+                <div className="text-sm text-black">Active Users</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-lg border border-amber-100 text-center">
+                <div className="text-2xl font-bold bg-linear-to-br from-amber-600 to-orange-600 bg-clip-text text-transparent">10M+</div>
+                <div className="text-sm text-black">Orders Processed</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-lg border border-amber-100 text-center">
+                <div className="text-2xl font-bold bg-linear-to-br from-amber-600 to-orange-600 bg-clip-text text-transparent">99.9%</div>
+                <div className="text-sm text-black">Uptime</div>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-lg border border-amber-100 text-center">
+                <div className="text-2xl font-bold bg-linear-to-br from-amber-600 to-orange-600 bg-clip-text text-transparent">24/7</div>
+                <div className="text-sm text-black">Support</div>
+              </div>
+            </div>
+
+            {/* Features Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <div className="bg-white rounded-xl p-4 shadow-md border border-amber-100 hover:shadow-lg transition-shadow">
+                <div className="w-10 h-10 bg-linear-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center mb-3">
+                  <ShoppingCart className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="font-semibold text-black mb-1">Quick POS</h3>
+                <p className="text-xs text-black!">Fast checkout with search & categories</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-md border border-amber-100 hover:shadow-lg transition-shadow">
+                <div className="w-10 h-10 bg-linear-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mb-3">
+                  <Package className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="font-semibold text-black mb-1">Inventory</h3>
+                <p className="text-xs text-black!">Real-time stock tracking & alerts</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-md border border-amber-100 hover:shadow-lg transition-shadow">
+                <div className="w-10 h-10 bg-card rounded-lg flex items-center justify-center mb-3">
+                  <Brain className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="font-semibold text-black mb-1">AI Insights</h3>
+                <p className="text-xs text-black!">Smart analytics & forecasting</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-md border border-amber-100 hover:shadow-lg transition-shadow">
+                <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mb-3">
+                  <Users className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="font-semibold text-black mb-1">Customers</h3>
+                <p className="text-xs text-black!">Loyalty & CRM built-in</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-md border border-amber-100 hover:shadow-lg transition-shadow">
+                <div className="w-10 h-10 bg-linear-to-br from-pink-500 to-pink-600 rounded-lg flex items-center justify-center mb-3">
+                  <BarChart3 className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="font-semibold text-black mb-1">Reports</h3>
+                <p className="text-xs text-black!">Comprehensive analytics</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-md border border-amber-100 hover:shadow-lg transition-shadow">
+                <div className="w-10 h-10 bg-linear-to-br from-teal-500 to-teal-600 rounded-lg flex items-center justify-center mb-3">
+                  <Store className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="font-semibold text-black mb-1">Multi-Store</h3>
+                <p className="text-xs text-black!">Manage multiple locations</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-md border border-amber-100 hover:shadow-lg transition-shadow">
+                <div className="w-10 h-10 bg-linear-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center mb-3">
+                  <CreditCard className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="font-semibold text-black mb-1">Payments</h3>
+                <p className="text-xs text-black!">Cash, UPI, Card & more</p>
+              </div>
+              <div className="bg-white rounded-xl p-4 shadow-md border border-amber-100 hover:shadow-lg transition-shadow">
+                <div className="w-10 h-10 bg-linear-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center mb-3">
+                  <Receipt className="h-5 w-5 text-white" />
+                </div>
+                <h3 className="font-semibold text-black mb-1">GST Ready</h3>
+                <p className="text-xs text-black!">India tax compliance</p>
+              </div>
+            </div>
+
+            {/* View All Features Link */}
+            <div className="text-center mb-8">
+              <Link 
+                href="/features" 
+                className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 font-semibold"
+              >
+                View All Features
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+
+        {/* Login Section */}
+          <div className="max-w-2xl mx-auto">
+            <Card className="w-full shadow-2xl border-2 border-amber-200 bg-white xl:w-xl">
+              <CardHeader className="bg-linear-to-br from-amber-600 to-orange-600 text-white rounded-t-lg p-6">
+                <div className="flex flex-col items-center gap-2">
+                  <div className="bg-white/20 p-3 rounded-full">
+                    <Coffee className="h-8 w-8" />
+                  </div>
+                  <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
+                  <CardDescription className="text-amber-100">
+                    Access your POS dashboard
+                  </CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
             <Tabs value={loginTab} onValueChange={(v) => { setLoginTab(v as 'email' | 'sms'); setLoginError(''); setSmsLoginError('') }}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="email" className="flex items-center gap-2">
@@ -2715,7 +2844,7 @@ export default function Page() {
               <TabsContent value="email">
                 <form onSubmit={handleLogin} className="space-y-6">
                   <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium text-gray-700">
+                    <label htmlFor="email" className="text-sm font-medium text-black!">
                       Email
                     </label>
                     <Input
@@ -2729,7 +2858,7 @@ export default function Page() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    <label htmlFor="password" className="text-sm font-medium text-black!">
                       Password
                     </label>
                     <Input
@@ -2761,7 +2890,7 @@ export default function Page() {
                   {!otpSent ? (
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                        <label htmlFor="phone" className="text-sm font-medium text-black">
                           Phone Number
                         </label>
                         <Input
@@ -2794,7 +2923,7 @@ export default function Page() {
                   ) : (
                     <div className="space-y-6">
                       <div className="space-y-2">
-                        <label htmlFor="otp" className="text-sm font-medium text-gray-700">
+                        <label htmlFor="otp" className="text-sm font-medium text-black">
                           Enter OTP
                         </label>
                         <Input
@@ -2838,13 +2967,13 @@ export default function Page() {
                 </form>
               </TabsContent>
             </Tabs>
-            <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+            <div className="mt-6 p-4 bg-black rounded-lg border border-amber-200">
               {loginTab === 'email' ? (
                 <>
-                  <p className="text-xs text-gray-600 text-center mb-2">
+                  <p className="text-xs text-white! text-center mb-2">
                     Demo Accounts:
                   </p>
-                  <div className="space-y-1 text-xs text-white">
+                  <div className="space-y-1 text-xs text-black!">
                     <p>Admin: admin@coffeeshop.com</p>
                     <p>Manager: manager@coffeeshop.com</p>
                     <p>Cashier: cashier@coffeeshop.com</p>
@@ -2853,7 +2982,7 @@ export default function Page() {
                 </>
               ) : (
                 <>
-                  <p className="text-xs text-gray-600 text-center mb-2">
+                  <p className="text-xs text-black! text-center mb-2">
                     Test SMS Login:
                   </p>
                   <div className="space-y-1 text-xs text-white">
@@ -2866,8 +2995,11 @@ export default function Page() {
           </CardContent>
         </Card>
       </div>
+      </section>
+      </div>
     )
   }
 
+ 
   return <POSDashboard user={user} setUser={setUser} onLogout={handleLogout} />
 }

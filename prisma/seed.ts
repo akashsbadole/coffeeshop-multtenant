@@ -5,6 +5,142 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Starting seed...')
 
+  // Create system settings
+  console.log('Creating system settings...')
+  await prisma.systemSettings.upsert({
+    where: { id: 'default' },
+    update: {},
+    create: {
+      id: 'default',
+      subscription_enabled: true,
+      trial_days: 14,
+      free_plan_enabled: true,
+      payment_gateway: 'razorpay',
+      invoice_prefix: 'INV-SUB',
+    }
+  })
+
+  // Create default subscription plans
+  console.log('Creating subscription plans...')
+  
+  // FREE Plan
+  await prisma.subscriptionPlan.upsert({
+    where: { name: 'Free' },
+    update: {},
+    create: {
+      name: 'Free',
+      type: 'FREE',
+      description: 'Perfect for getting started',
+      price: 0,
+      yearlyPrice: 0,
+      currency: 'INR',
+      features: JSON.stringify([
+        'Basic POS Features',
+        'Order Management',
+        'Customer Database',
+        'Basic Reports',
+      ]),
+      maxUsers: 2,
+      maxStores: 1,
+      maxOrdersPerMonth: 50,
+      maxMenuItems: 50,
+      maxInventoryItems: 50,
+      supportLevel: 'email',
+      isActive: true
+    }
+  })
+
+  // BASIC Plan
+  await prisma.subscriptionPlan.upsert({
+    where: { name: 'Basic' },
+    update: {},
+    create: {
+      name: 'Basic',
+      type: 'BASIC',
+      description: 'Great for growing businesses',
+      price: 999,
+      yearlyPrice: 9990,
+      currency: 'INR',
+      features: JSON.stringify([
+        'Full POS Features',
+        'Inventory Management',
+        'GST Compliance',
+        'Advanced Reports',
+        'Multi-Payment Methods',
+        'WhatsApp Support',
+      ]),
+      maxUsers: 5,
+      maxStores: 1,
+      maxOrdersPerMonth: 500,
+      maxMenuItems: 200,
+      maxInventoryItems: 200,
+      supportLevel: 'chat',
+      isActive: true
+    }
+  })
+
+  // PROFESSIONAL Plan
+  await prisma.subscriptionPlan.upsert({
+    where: { name: 'Professional' },
+    update: {},
+    create: {
+      name: 'Professional',
+      type: 'PROFESSIONAL',
+      description: 'For established coffee shops',
+      price: 2499,
+      yearlyPrice: 24990,
+      currency: 'INR',
+      features: JSON.stringify([
+        'All Basic Features',
+        'Multi-Store Support',
+        'AI Sales Insights',
+        'API Access',
+        'Table Management',
+        'KDS Integration',
+        'Priority Support',
+      ]),
+      maxUsers: 15,
+      maxStores: 3,
+      maxOrdersPerMonth: 2000,
+      maxMenuItems: 500,
+      maxInventoryItems: 500,
+      supportLevel: 'phone',
+      isActive: true
+    }
+  })
+
+  // ENTERPRISE Plan
+  await prisma.subscriptionPlan.upsert({
+    where: { name: 'Enterprise' },
+    update: {},
+    create: {
+      name: 'Enterprise',
+      type: 'ENTERPRISE',
+      description: 'For large restaurant chains',
+      price: 4999,
+      yearlyPrice: 49990,
+      currency: 'INR',
+      features: JSON.stringify([
+        'All Professional Features',
+        'Unlimited Stores',
+        'Unlimited Users',
+        'Custom Integrations',
+        'Dedicated Account Manager',
+        'SLA Guarantee',
+        '24/7 Phone Support',
+      ]),
+      maxUsers: 100,
+      maxStores: 10,
+      maxOrdersPerMonth: null,
+      maxMenuItems: null,
+      maxInventoryItems: null,
+      supportLevel: 'dedicated',
+      isActive: true
+    }
+  })
+
+  console.log('Created subscription plans')
+
   // Create default organization
   const organization = await prisma.organization.upsert({
     where: { email: 'default@coffeeshop.com' },
@@ -29,53 +165,33 @@ async function main() {
 
   console.log('Created organization:', organization.name)
 
-  // Create default subscription plan
-  const subscriptionPlan = await prisma.subscriptionPlan.upsert({
-    where: { name: 'FREE' },
-    update: {},
-    create: {
-      name: 'FREE',
-      type: 'FREE',
-      description: 'Free plan for small businesses',
-      price: 0,
-      currency: 'INR',
-      features: JSON.stringify([
-        '1 Store',
-        '3 Users',
-        '50 Menu Items',
-        'Basic Reports'
-      ]),
-      maxUsers: 3,
-      maxStores: 1,
-      maxOrdersPerMonth: 100,
-      maxMenuItems: 50,
-      maxInventoryItems: 100,
-      supportLevel: 'email',
-      isActive: true
-    }
+  // Get the Professional plan for the default organization
+  const proPlan = await prisma.subscriptionPlan.findUnique({
+    where: { name: 'Professional' }
   })
 
-  // Create tenant subscription
-  const subscription = await prisma.tenantSubscription.upsert({
-    where: {
-      id: `sub-${organization.id}`
-    },
-    update: {},
-    create: {
-      id: `sub-${organization.id}`,
-      organizationId: organization.id,
-      planId: subscriptionPlan.id,
-      status: 'TRIAL',
-      billingCycle: 'MONTHLY',
-      startDate: new Date(),
-      endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      autoRenew: true,
-      paymentStatus: 'pending'
-    }
-  })
-
-  console.log('Created subscription:', subscription.status)
+  // Create tenant subscription with Professional plan
+  if (proPlan) {
+    await prisma.tenantSubscription.upsert({
+      where: {
+        id: `sub-${organization.id}`
+      },
+      update: {},
+      create: {
+        id: `sub-${organization.id}`,
+        organizationId: organization.id,
+        planId: proPlan.id,
+        status: 'TRIAL',
+        billingCycle: 'MONTHLY',
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        autoRenew: true,
+        paymentStatus: 'pending'
+      }
+    })
+    console.log('Created tenant subscription')
+  }
 
   // Create categories
   const categories = await Promise.all([

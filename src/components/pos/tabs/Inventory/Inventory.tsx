@@ -157,8 +157,8 @@ export function POSInventory() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-white">Inventory</h2>
-          <p className="text-gray-500">Track stock levels and manage inventory</p>
+          <h2 className="text-2xl font-bold text-black">Inventory</h2>
+          <p className="text-black!">Track stock levels and manage inventory</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={fetchInventory} variant="outline">
@@ -239,12 +239,12 @@ export function POSInventory() {
 
       {/* Inventory List */}
       <Card className="shadow-xl border-0">
-        <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
+        <CardHeader className="bg-card text-white">
           <CardTitle className="flex items-center gap-2">
             <Package className="h-6 w-6" />
             Inventory Items
           </CardTitle>
-          <CardDescription className="text-amber-100">
+          <CardDescription className="text-white">
             Manage stock levels and restock items
           </CardDescription>
         </CardHeader>

@@ -157,7 +157,7 @@ export function ReservationSystem() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Table Reservations</h2>
-          <p className="text-gray-500">Manage restaurant table bookings</p>
+          <p className="text-black">Manage restaurant table bookings</p>
         </div>
         <div className="flex items-center gap-2">
           <Input

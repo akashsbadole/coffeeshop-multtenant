@@ -296,7 +296,7 @@ export function PayLaterTracking() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Pay Later Tracking</h2>
-          <p className="text-gray-500">Manage customer dues and partial payments</p>
+          <p className="text-black">Manage customer dues and partial payments</p>
         </div>
         <Button onClick={() => {
           toast.success('Feature configured successfully')

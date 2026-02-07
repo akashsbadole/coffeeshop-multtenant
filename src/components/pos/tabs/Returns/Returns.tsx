@@ -208,7 +208,7 @@ export function Returns() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Returns & Exchanges</h2>
-          <p className="text-gray-500">Process customer returns and exchanges</p>
+          <p className="text-black">Process customer returns and exchanges</p>
         </div>
         <Button
           onClick={() => {

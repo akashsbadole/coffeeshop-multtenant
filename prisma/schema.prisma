@@ -315,6 +315,7 @@ model TenantSubscription {
 
   organization      Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   plan              SubscriptionPlan   @relation(fields: [planId], references: [id])
+  payments          SubscriptionPayment[]
 
   @@unique([organizationId, status])
   @@index([organizationId])
@@ -451,11 +452,23 @@ model StoreSettings {
   storeId         String?  @unique
   posType         PosType  @default(GENERAL)
   storeName       String   @default("Universal POS")
+  address         String?
+  phone           String?
+  email           String?
+  logoUrl         String?
+  gstin           String?
+  state           String?
+  stateCode       String?
   bankName        String?
   accountNumber   String?
   ifscCode        String?
   invoicePrefix   String   @default("INV")
   startingInvoice Int      @default(1)
+  currency        String   @default("INR")
+  footerText      String?
+  termsConditions String?
+  defaultGstRate       GstRate   @default(EIGHTEEN)
+  gstInclusivePricing  Boolean   @default(false)
   enableTableManagement   Boolean @default(false)
   enableKDS             Boolean @default(false)
   enableSizeVariants    Boolean @default(false)
@@ -464,14 +477,14 @@ model StoreSettings {
   enableSerialNumbers   Boolean @default(false)
   enableReturns         Boolean @default(false)
   enableExchanges       Boolean @default(false)
+  enableGiftCards       Boolean @default(false)
   enableLoyaltyProgram  Boolean @default(false)
   enableMultiStore      Boolean @default(false)
   enableDelivery        Boolean @default(false)
   enableVoiceCommands   Boolean @default(false)
-  defaultGstRate       GstRate   @default(EIGHTEEN)
-  gstInclusivePricing  Boolean   @default(false)
-  footerText           String?
-  termsConditions      String?
+  enableStaffManagement Boolean @default(false)
+  showImages           Boolean @default(false)
+  autoLogout           Boolean @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -1775,5 +1788,42 @@ model StaffDocument {
 
   @@index([userId])
   @@index([type])
+}
+
+// ==================== Subscription Payment Tracking ====================
+
+model SubscriptionPayment {
+  id                  String              @id @default(cuid())
+  subscriptionId      String
+  organizationId      String
+  amount              Float
+  currency            String              @default("INR")
+  paymentMethod       String
+  transactionId       String?
+  paymentStatus       String              @default("pending")
+  invoiceUrl          String?
+  notes               String?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  subscription        TenantSubscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([organizationId])
+  @@index([paymentStatus])
+  @@index([createdAt])
+}
+
+// ==================== System Settings ====================
+
+model SystemSettings {
+  id                    String   @id @default("default")
+  subscription_enabled  Boolean  @default(true)
+  trial_days            Int      @default(14)
+  free_plan_enabled     Boolean  @default(true)
+  payment_gateway       String   @default("razorpay")
+  invoice_prefix       String   @default("INV-SUB")
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
 }
 

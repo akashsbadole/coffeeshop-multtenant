@@ -199,7 +199,7 @@ ${selectedSlip.footer}
       <Card className="max-w-md mx-auto">
         <CardContent className="p-6 text-center">
           <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <p className="text-gray-500">No salary slips found</p>
+          <p className="text-black">No salary slips found</p>
         </CardContent>
       </Card>
     )
@@ -331,7 +331,7 @@ ${selectedSlip.footer}
                 <p className="text-xs text-gray-500 mt-1">{selectedSlip.netSalary.inWords}</p>
               </div>
               <div className="text-right text-sm">
-                <p className="text-gray-500">Payment Date</p>
+                <p className="text-black">Payment Date</p>
                 <p className="font-medium">{selectedSlip.paymentDetails.paymentDate}</p>
                 <p className="text-gray-500 mt-2">Transaction ID</p>
                 <p className="font-medium">{selectedSlip.paymentDetails.transactionId}</p>

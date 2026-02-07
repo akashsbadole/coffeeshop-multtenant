@@ -207,7 +207,7 @@ export function InventoryManagement() {
                 <Package className="h-6 w-6" />
                 Inventory Management
               </CardTitle>
-              <CardDescription className="text-amber-100">
+              <CardDescription className="text-black">
                 Track stock levels and manage inventory
               </CardDescription>
             </div>

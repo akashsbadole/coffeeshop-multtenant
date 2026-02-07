@@ -167,7 +167,7 @@ export default function OnboardingModal({ open, onOpenChange, onComplete }: Onbo
           </VisuallyHidden>
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-12 w-12 animate-spin text-amber-500 mb-4" />
-            <p className="text-gray-500">Checking store settings...</p>
+            <p className="text-black">Checking store settings...</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -367,7 +367,7 @@ export default function OnboardingModal({ open, onOpenChange, onComplete }: Onbo
                       <Label htmlFor="gstInclusive" className="text-sm font-medium cursor-pointer text-black!" style={{color:'black'}}>
                         GST Inclusive Pricing
                       </Label>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-red mt-1">
                         {formData.gstInclusivePricing 
                           ? 'Prices shown include GST' 
                           : 'GST will be added to prices'}

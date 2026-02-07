@@ -2,13 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 /**
- * Register new user with phone number
+ * Register new user with organization and optional subscription
  * POST /api/auth/register
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, email, phone, password, role } = body
+    const { 
+      name, 
+      email, 
+      phone, 
+      password, 
+      role,
+      organizationName,
+      planId,
+      billingCycle = 'MONTHLY'
+    } = body
 
     if (!name || !phone) {
       return NextResponse.json(
@@ -39,17 +48,128 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user with this email already exists (if email provided)
-    if (email) {
-      const existingUserByEmail = await db.user.findUnique({
-        where: { email }
+    // If organization name is provided, create organization with subscription
+    let organization: Awaited<ReturnType<typeof db.organization.create>> | null = null
+    let subscription: Awaited<ReturnType<typeof db.tenantSubscription.create>> | null = null
+    let checkoutUrl: string | null = null
+
+    if (organizationName) {
+      // Generate slug from organization name
+      const slug = organizationName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') + '-' + Date.now().toString(36)
+
+      // Create organization
+      organization = await db.organization.create({
+        data: {
+          name: organizationName,
+          slug,
+          email: email || `${slug}@example.com`,
+          phone: cleanedPhone,
+        }
       })
 
-      if (existingUserByEmail) {
-        return NextResponse.json(
-          { error: 'User with this email already exists' },
-          { status: 409 }
-        )
+      // Check if user with this email already exists in this organization
+      if (email) {
+        const existingUserByEmail = await db.user.findFirst({
+          where: { 
+            organizationId: organization.id,
+            email: email
+          }
+        })
+
+        if (existingUserByEmail) {
+          return NextResponse.json(
+            { error: 'User with this email already exists' },
+            { status: 409 }
+          )
+        }
+      }
+
+      // If plan is selected, create subscription
+      if (planId) {
+        const plan = await db.subscriptionPlan.findUnique({
+          where: { id: planId }
+        })
+
+        if (!plan) {
+          return NextResponse.json(
+            { error: 'Invalid subscription plan' },
+            { status: 400 }
+          )
+        }
+
+        // Calculate dates based on billing cycle
+        const startDate = new Date()
+        const endDate = new Date()
+        
+        if (plan.type === 'FREE') {
+          endDate.setFullYear(endDate.getFullYear() + 1)
+        } else if (billingCycle === 'MONTHLY') {
+          endDate.setMonth(endDate.getMonth() + 1)
+        } else if (billingCycle === 'QUARTERLY') {
+          endDate.setMonth(endDate.getMonth() + 3)
+        } else {
+          endDate.setFullYear(endDate.getFullYear() + 1)
+        }
+
+        // For free plans, activate immediately
+        if (plan.type === 'FREE') {
+          subscription = await db.tenantSubscription.create({
+            data: {
+              organizationId: organization.id,
+              planId: plan.id,
+              status: 'ACTIVE',
+              billingCycle: 'YEARLY',
+              startDate,
+              endDate,
+              autoRenew: true,
+            }
+          })
+        } else {
+          // For paid plans, create pending subscription
+          subscription = await db.tenantSubscription.create({
+            data: {
+              organizationId: organization.id,
+              planId: plan.id,
+              status: 'PENDING',
+              billingCycle,
+              startDate,
+              endDate,
+              autoRenew: true,
+              paymentStatus: 'pending',
+            }
+          })
+
+          // Create payment record
+          const price = billingCycle === 'YEARLY' && plan.yearlyPrice 
+            ? plan.yearlyPrice 
+            : plan.price
+
+          await db.subscriptionPayment.create({
+            data: {
+              subscriptionId: subscription.id,
+              organizationId: organization.id,
+              amount: price,
+              currency: plan.currency,
+              paymentMethod: 'razorpay',
+              paymentStatus: 'pending',
+            }
+          })
+
+          // Generate checkout URL
+          checkoutUrl = `/checkout/${subscription.id}?amount=${price}&currency=${plan.currency}`
+        }
+
+        // Update organization limits based on plan
+        await db.organization.update({
+          where: { id: organization.id },
+          data: {
+            maxUsers: plan.maxUsers,
+            maxStores: plan.maxStores,
+          }
+        })
       }
     }
 
@@ -57,11 +177,12 @@ export async function POST(request: NextRequest) {
     const user = await db.user.create({
       data: {
         name,
-        email: email || null,
+        email: email || `${cleanedPhone}@example.com`,
         phone: cleanedPhone,
-        password: password || 'password123', // Default password if none provided
-        role: role || 'CASHIER',
-        isActive: true
+        password: password || 'password123',
+        role: role || 'ADMIN',
+        isActive: true,
+        organizationId: organization?.id || '',
       }
     })
 
@@ -74,7 +195,19 @@ export async function POST(request: NextRequest) {
         phone: user.phone,
         role: user.role
       },
-      message: 'Registration successful'
+      organization: organization ? {
+        id: organization.id,
+        name: organization.name,
+      } : null,
+      subscription: subscription ? {
+        id: subscription.id,
+        status: subscription.status,
+        planId: subscription.planId,
+      } : null,
+      checkoutUrl,
+      message: organization 
+        ? 'Registration successful. ' + (planId ? 'Complete payment to activate subscription.' : 'Organization created with free plan.')
+        : 'Registration successful'
     }, { status: 201 })
   } catch (error) {
     console.error('Error registering user:', error)

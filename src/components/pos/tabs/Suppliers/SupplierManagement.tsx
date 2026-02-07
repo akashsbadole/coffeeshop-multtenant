@@ -213,7 +213,7 @@ export function SupplierManagement() {
         </div>
         <Button
           onClick={() => setAddSupplierOpen(true)}
-          className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+          className="bg-card hover:from-amber-600 hover:to-orange-700"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Supplier
@@ -249,7 +249,7 @@ export function SupplierManagement() {
       </div>
 
       <Card className="shadow-xl border-0">
-        <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
+        <CardHeader className="bg-card text-white">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -403,7 +403,7 @@ export function SupplierManagement() {
       {/* Add Supplier Dialog */}
       <Dialog open={addSupplierOpen} onOpenChange={setAddSupplierOpen}>
         <DialogContent className="border-0 shadow-2xl max-w-2xl">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Plus className="h-6 w-6" />
               Add New Supplier
@@ -506,7 +506,7 @@ export function SupplierManagement() {
             </Button>
             <Button
               onClick={handleAddSupplier}
-              className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="bg-card hover:from-amber-600 hover:to-orange-700"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Supplier
@@ -518,7 +518,7 @@ export function SupplierManagement() {
       {/* Edit Supplier Dialog */}
       <Dialog open={editSupplierOpen} onOpenChange={setEditSupplierOpen}>
         <DialogContent className="border-0 shadow-2xl max-w-2xl">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Edit className="h-6 w-6" />
               Edit Supplier
@@ -621,7 +621,7 @@ export function SupplierManagement() {
             </Button>
             <Button
               onClick={handleUpdateSupplier}
-              className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="bg-card hover:from-amber-600 hover:to-orange-700"
             >
               <Edit className="h-4 w-4 mr-2" />
               Update Supplier

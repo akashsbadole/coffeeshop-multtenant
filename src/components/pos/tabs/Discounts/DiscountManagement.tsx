@@ -280,7 +280,7 @@ export function DiscountManagement() {
         </div>
         <Button
           onClick={() => setAddDiscountOpen(true)}
-          className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+          className="bg-card"
         >
           <Plus className="h-4 w-4 mr-2" />
           Create Discount
@@ -289,13 +289,13 @@ export function DiscountManagement() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="border-0 shadow-lg bg-linear-to-br from-amber-500 to-orange-600 text-white">
+        <Card className="border-0 shadow-lg bg-card text-white">
           <CardHeader className="p-4">
             <CardDescription className="text-amber-100 text-sm">Total Discounts</CardDescription>
             <CardTitle className="text-2xl font-bold">{stats.total}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="border-0 shadow-lg bg-linear-to-br from-green-500 to-green-600 text-white">
+        <Card className="border-0 shadow-lg bg-card text-white">
           <CardHeader className="p-4">
             <CardDescription className="text-green-100 text-sm">Active Discounts</CardDescription>
             <CardTitle className="text-2xl font-bold">{stats.active}</CardTitle>
@@ -307,7 +307,7 @@ export function DiscountManagement() {
             <CardTitle className="text-2xl font-bold">{stats.used}</CardTitle>
           </CardHeader>
         </Card>
-        <Card className="border-0 shadow-lg bg-linear-to-br from-red-500 to-red-600 text-white">
+        <Card className="border-0 shadow-lg bg-card text-white">
           <CardHeader className="p-4">
             <CardDescription className="text-red-100 text-sm">Expiring Soon</CardDescription>
             <CardTitle className="text-2xl font-bold">{stats.expiring}</CardTitle>
@@ -316,7 +316,7 @@ export function DiscountManagement() {
       </div>
 
       <Card className="shadow-xl border-0">
-        <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
+        <CardHeader className="bg-card text-white">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -365,7 +365,7 @@ export function DiscountManagement() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <ScrollArea className="h-[500px]">
+          <ScrollArea className="h-125">
             <Table>
               <TableHeader className="bg-amber-50 sticky top-0">
                 <TableRow>
@@ -501,7 +501,7 @@ export function DiscountManagement() {
       {/* Add Discount Dialog */}
       <Dialog open={addDiscountOpen} onOpenChange={setAddDiscountOpen}>
         <DialogContent className="border-0 shadow-2xl max-w-2xl">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Plus className="h-6 w-6" />
               Create New Discount
@@ -642,7 +642,7 @@ export function DiscountManagement() {
             </Button>
             <Button
               onClick={handleAddDiscount}
-              className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="bg-card hover:from-amber-600 hover:to-orange-700"
             >
               <Plus className="h-4 w-4 mr-2" />
               Create Discount
@@ -654,7 +654,7 @@ export function DiscountManagement() {
       {/* Edit Discount Dialog */}
       <Dialog open={editDiscountOpen} onOpenChange={setEditDiscountOpen}>
         <DialogContent className="border-0 shadow-2xl max-w-2xl">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <Edit className="h-6 w-6" />
               Edit Discount
@@ -789,7 +789,7 @@ export function DiscountManagement() {
             </Button>
             <Button
               onClick={handleUpdateDiscount}
-              className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="bg-card hover:from-amber-600 hover:to-orange-700"
             >
               <Edit className="h-4 w-4 mr-2" />
               Update Discount

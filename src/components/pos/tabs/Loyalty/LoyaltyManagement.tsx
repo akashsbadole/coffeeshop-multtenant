@@ -241,7 +241,7 @@ export function CustomerManagement() {
         </div>
         <Button
           onClick={() => setAddCustomerOpen(true)}
-          className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+          className="bg-card hover:from-amber-600 hover:to-orange-700"
         >
           <Users className="h-4 w-4 mr-2" />
           Register Customer
@@ -310,7 +310,7 @@ export function CustomerManagement() {
         {/* Customers Tab */}
         <TabsContent value="customers">
           <Card className="shadow-xl border-0">
-            <CardHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white">
+            <CardHeader className="bg-card text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
@@ -427,7 +427,7 @@ export function CustomerManagement() {
                               <Button
                                 size="sm"
                                 onClick={() => openRedeemDialog(customer)}
-                                className="h-8 px-3 bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+                                className="h-8 px-3 bg-card hover:from-amber-600 hover:to-orange-700"
                               >
                                 <Gift className="h-3 w-3 mr-1" />
                                 Redeem
@@ -594,7 +594,7 @@ export function CustomerManagement() {
       {/* Register Customer Dialog */}
       <Dialog open={addCustomerOpen} onOpenChange={setAddCustomerOpen}>
         <DialogContent className="border-0 shadow-2xl">
-          <DialogHeader className="bg-linear-to-r from-amber-500 to-orange-600 text-white rounded-t-lg p-6 -m-6 mb-6">
+          <DialogHeader className="bg-card text-white rounded-t-lg p-6 -m-6 mb-6">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <UserPlus className="h-6 w-6" />
               Register New Customer
@@ -652,7 +652,7 @@ export function CustomerManagement() {
             </Button>
             <Button
               onClick={handleAddCustomer}
-              className="bg-linear-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700"
+              className="bg-card hover:from-amber-600 hover:to-orange-700"
             >
               <UserPlus className="h-4 w-4 mr-2" />
               Register
